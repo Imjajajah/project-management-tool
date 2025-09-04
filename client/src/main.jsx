@@ -1,0 +1,17 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import 'bootstrap/dist/css/bootstrap.min.css'; // <-- Add this line
+import 'bootstrap-icons/font/bootstrap-icons.css';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage/>}/>
+      </Routes>
+    </BrowserRouter>
+  </React.StrictMode>
+)
