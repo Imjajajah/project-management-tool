@@ -1,6 +1,6 @@
 import React from 'react';
 
-const TaskItem = ({ task, onToggleComplete, onDelete }) => {
+const TaskItem = ({ task, onToggleComplete, onDelete, isSelected, onToggleSelect }) => {
 
     const formatDate = (dateString) => {
         if (!dateString) {return ''};
@@ -21,21 +21,30 @@ const TaskItem = ({ task, onToggleComplete, onDelete }) => {
     const formattedDueDate = formatDate(task.dueDate);
 
     return (
-        <div 
+        <div
             className={`card mb-2 p-2 text-dark border-secondary ${task.completed ? 'bg-light' : ''}`}
-            onClick={() => onToggleComplete(task)} 
+            // Note: The main onClick now handles both completion and selection
+            onClick={() => onToggleComplete(task)}
             style={{ cursor: 'pointer' }}>
             <div className="d-flex align-items-center justify-content-between text-start">
                 <div className="d-flex align-items-center">
                     <input
                         className="form-check-input me-3 mt-0"
                         type="checkbox"
+                        checked={isSelected}
+                        onChange={() => onToggleSelect(task._id)}
+                        onClick={(e) => e.stopPropagation()} // Prevents the parent div's onClick from firing
+                        id={`task-select-${task._id}`}
+                    />
+                    <input
+                        className="form-check-input me-3 mt-0 d-none"
+                        type="checkbox"
                         checked={task.completed}
-                        readOnly 
-                        id={`task-${task._id}`}
+                        readOnly
+                        id={`task-complete-${task._id}`}
                     />
                     <label
-                        htmlFor={`task-${task._id}`}
+                        htmlFor={`task-complete-${task._id}`}
                         className={`form-check-label w-100 ${task.completed ? 'text-decoration-line-through text-secondary' : 'text-dark'}`}
                         style={{ cursor: 'pointer' }}
                     >
@@ -47,14 +56,14 @@ const TaskItem = ({ task, onToggleComplete, onDelete }) => {
                         {formattedDueDate ? `Due: ${formattedDueDate}` : ''}
                     </p>
                     <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
+                        onClick={(e) => {
+                            e.stopPropagation();
                             onDelete(task._id);
                         }}
                         className="btn btn-sm btn-outline-danger border-0"
-                        aria-label="Delete Task"
-                    > 
-                        <i className="bi bi-trash-fill"></i>
+                        aria-label="Delete Task" title="Delete"
+                    >
+                        <i className="bi bi-trash-fill"></i> Delete
                     </button>
                 </div>
             </div>

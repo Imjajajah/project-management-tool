@@ -18,8 +18,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./client:/app
-      - /app/node_modules
+      - ./client:/app  # Mounts your local source code
+      - /app/node_modules # Ensures the container's node_modules is used
     command: npm run dev -- --port 3000 --host
 
   mongo:

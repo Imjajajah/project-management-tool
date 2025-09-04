@@ -63,3 +63,7 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.text-xs {
+  font-size: 0.75rem; /* This is typically smaller than `text-sm` */
+}

@@ -43,11 +43,18 @@ const AddProjectForm = ({ onProjectAdded, onCancel }) => {
     return (
         <form onSubmit={handleSubmit} className="p-1">
             <div className="mb-3 text-start">
-                <label htmlFor="projectName" className="form-label text-dark">Project Name</label>
+                <label htmlFor="projectName" className="form-label text-dark d-flex align-items-center">
+                    Project Name
+                    <span className="text-danger ms-1">*</span>
+                </label>
                 <input type="text" className="form-control" id="projectName" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter project name" required />
             </div>
             <div className="mb-3 text-start">
-                <label htmlFor="projectDescription" className="form-label text-dark">Description</label>
+                <label htmlFor="projectDescription" className="form-label text-dark">
+                    Description
+                    <span className="text-danger ms-1">*</span>
+                </label>
+                
                 <textarea className="form-control" id="projectDescription" rows="3" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Enter a brief description"></textarea>
             </div>
             <div className="mb-3 text-start">
