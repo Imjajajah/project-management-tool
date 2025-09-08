@@ -1,81 +1,103 @@
-const express = require('express');
-const router = express.Router({ mergeParams: true });
-const Task = require('../models/Task');
+import express from 'express';
+const router = express.Router();
+import Task from '../models/Task.js';
+import Project from '../models/Project.js';
+import auth from '../middleware/auth.js';
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 
-// Get all tasks for specific project
-router.get('/:projectId/tasks', async (req, res) => {
+
+// GET all tasks for a specific project for the authenticated user
+router.get('/:projectId/tasks', auth, async (req, res) => {
     try {
-        // FIXED: Corrected the typo from 'projectsId' to 'projectId'
-        const tasks = await Task.find({ project: req.params.projectId });
+        const { projectId } = req.params;
+
+        const project = await Project.findOne({ _id: projectId, user: req.user.id });
+        if (!project) {
+            return res.status(404).json({ message: "Project not found or you do not have authorization to view it." });
+        }
+
+        const tasks = await Task.find({ project: projectId });
         res.json(tasks);
     } catch (err) {
-        res.status(500).json({message: err.message});
+        res.status(500).json({ message: err.message });
     }
 });
 
 // POST a new task
-router.post('/:projectId/tasks', async (req, res) => {
+router.post('/:projectId/tasks', auth, async (req, res) => {
     const { name, dueDate } = req.body;
     const { projectId } = req.params;
 
+    const project = await Project.findOne({ _id: projectId, user: req.user.id });
+    if (!project) {
+        return res.status(404).json({ message: 'Project not found or you do not have authorization to add a task to it.' });
+    }
+
     const task = new Task({
-        name, 
+        name,
         project: projectId,
         dueDate,
+        user: req.user.id
     });
 
     try {
         const newTask = await task.save();
         res.status(201).json(newTask);
-    } catch (err){
+    } catch (err) { // Changed 'error' to 'err' for consistency
         res.status(400).json({ message: err.message });
     }
 });
 
 // PUT/PATCH to update a task
-router.put('/tasks/:taskId', async (req, res) => {
+router.put('/tasks/:taskId', auth, async (req, res) => {
     try {
-        const task = await Task.findById(req.params.taskId);
+        const task = await Task.findOne({ _id: req.params.taskId, user: req.user.id });
 
         if (!task) {
-            return res.status(404).json({ message: 'Task not found' });
+            return res.status(404).json({ message: 'Task not found or you do not have authorization to update it.' });
         }
 
-        const { name, completed, dueDate } = req.body;
-
-        task.name = name || task.name;
-
-        if (completed !== undefined){
-            task.completed = completed;
-        }
-
-        if (dueDate !== undefined){
-            task.dueDate = dueDate;
-        }
+        const { name, completed, dueDate } = req.body; // Corrected 'complete' to 'completed'
         
+        if (name !== undefined) task.name = name;
+        if (completed !== undefined) task.completed = completed;
+        if (dueDate !== undefined) task.dueDate = dueDate;
+
         const updatedTask = await task.save();
-        // FIXED: Returned the correct variable 'updatedTask' instead of 'newTask'
         res.json(updatedTask);
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
 });
 
-// DELETE a task
-// FIXED: 'route' to 'router' and corrected the URL path
-router.delete('/tasks/:taskId', async (req, res) => {
+// DELETE multiple tasks
+router.delete('/tasks/bulk-delete', auth, async (req, res) => {
     try {
-        const deletedTask = await Task.findByIdAndDelete(req.params.taskId);
-        
-        // FIXED: Used the correct variable name 'deletedTask'
-        if (!deletedTask){
-            return res.status(404).json({ message: 'Task not found' });
+        const ids = req.query.ids.split(',');
+        const result = await Task.deleteMany({ _id: { $in: ids }, user: req.user.id });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ message: 'No tasks found or you do not have authorization to delete them.' });
+        }
+        res.json({ message: 'Tasks deleted successfully', deletedCount: result.deletedCount }); // Corrected typo: 'deleteCount' to 'deletedCount'
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// DELETE a single task
+router.delete('/tasks/:taskId', auth, async (req, res) => {
+    try {
+        const deletedTask = await Task.findOneAndDelete({ _id: req.params.taskId, user: req.user.id });
+
+        if (!deletedTask) {
+            return res.status(404).json({ message: 'Task not found or you do not have authorization to delete it.' });
         }
         res.json({ message: 'Task deleted successfully' });
     } catch (err) {
-        // FIXED: Corrected the syntax for sending a status and JSON response
         res.status(400).json({ message: err.message });
     }
 });
 
-module.exports = router;
+export default router;

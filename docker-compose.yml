@@ -2,13 +2,12 @@ version: '3.8'
 
 services:
   server:
-    build: 
-      context: ./server
-      dockerfile: Dockerfile
+    build: ./server
     ports:
       - "8000:8000"
     volumes:
       - ./server:/app
+      - server_node_modules:/app/node_modules # Use a named volume
     command: npm run start
 
   client:
@@ -18,9 +17,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./client:/app  # Mounts your local source code
-      - /app/node_modules # Ensures the container's node_modules is used
-    command: npm run dev -- --port 3000 --host
+      - ./client:/app
+      - client_node_modules:/app/node_modules
+    command: npm run dev -- --port 3000 --host # Corrected to 'npm run dev'
 
   mongo:
     image: mongo:6.0
@@ -30,5 +29,7 @@ services:
     volumes:
       - mongo-data:/data/db
 
-volumes: 
+volumes:
   mongo-data:
+  server_node_modules: # Define the named volume
+  client_node_modules: # Define the named volume

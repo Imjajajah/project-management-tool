@@ -1,5 +1,4 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema
+import mongoose, { Schema } from 'mongoose';
 
 const taskSchema = new Schema({
     name: {
@@ -19,6 +18,11 @@ const taskSchema = new Schema({
         ref: 'Project',
         required: true,
     },
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
 }, {timestamps: true });
 
-module.exports = mongoose.model('Task', taskSchema);
+export default mongoose.model('Task', taskSchema);

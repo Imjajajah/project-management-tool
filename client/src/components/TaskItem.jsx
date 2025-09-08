@@ -51,8 +51,8 @@ const TaskItem = ({ task, onToggleComplete, onDelete, isSelected, onToggleSelect
                         {task.name}
                     </label>
                 </div>
-                <div className="d-flex align-items-center text-start">
-                    <p className="text-start text-muted mb-0 me-3">
+                <div className="d-flex align-items-center">
+                    <p className="text-start text-muted mb-0 me-3 justify-content-start">
                         {formattedDueDate ? `Due: ${formattedDueDate}` : ''}
                     </p>
                     <button
@@ -60,7 +60,7 @@ const TaskItem = ({ task, onToggleComplete, onDelete, isSelected, onToggleSelect
                             e.stopPropagation();
                             onDelete(task._id);
                         }}
-                        className="btn btn-sm btn-outline-danger border-0"
+                        className="btn btn-sm btn-outline-danger border-0 justify-content-end"
                         aria-label="Delete Task" title="Delete"
                     >
                         <i className="bi bi-trash-fill"></i> Delete

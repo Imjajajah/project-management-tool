@@ -1,22 +1,28 @@
-const express = require("express");
+import express from 'express'; 
 const router = express.Router();
-const Project = require('../models/Project');
+import Project from '../models/Project.js';
+import Task from '../models/Task.js';
+import auth from '../middleware/auth.js';
 
-router.get('/', async (req, res) => {
+
+// GET all projects for the authenticated user
+router.get('/', auth, async (req, res) => {
     try {
-        const projects = await Project.find();
+        const projects = await Project.find({ user: req.user.id });
         res.json(projects);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 
-//POST a new project
-router.post('/', async (req, res) => {
+// POST a new project
+router.post('/', auth, async (req, res) => {
     const { name, description, dueDate } = req.body;
-
     const project = new Project({
-        name, description, dueDate,
+        name,
+        description,
+        dueDate,
+        user: req.user.id // Correctly uses the user ID from auth middleware
     });
 
     try {
@@ -27,42 +33,52 @@ router.post('/', async (req, res) => {
     }
 });
 
-//DELETE project
-router.delete('/:id', async (req, res) => {
+// DELETE a project and its associated tasks
+router.delete('/:id', auth, async (req, res) => {
     try {
-        const deletedProject = await Project.findByIdAndDelete(req.params.id);
+        const deletedProject = await Project.findOneAndDelete({ _id: req.params.id, user: req.user.id });
         if (!deletedProject) {
-            return res.status(404).json({ message: 'Project not found' });
+            return res.status(404).json({ message: 'Project not found or you do not have authorization to delete it.' });
         }
-        res.json({ message: 'Project deleted successfully!'});
-    } catch (err){
+
+        await Task.deleteMany({ project: req.params.id });
+        res.json({ message: 'Project and associated tasks deleted successfully!' });
+    } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 
-//PUT/PATCH an existing project
-router.put('/:id', async (req, res) => {
+// GET a specific project by ID
+router.get('/:id', auth, async (req, res) => {
     try {
-        const project = await Project.findById(req.params.id);
+        const project = await Project.findOne({ _id: req.params.id, user: req.user.id });
         if (!project) {
-            return res.status(404).json({ message: 'Project not found' });
+            return res.status(404).json({ message: 'Project not found or you do not have authorization to view it.' });
+        }
+        res.json(project);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// PUT/PATCH to update an existing project
+router.put('/:id', auth, async (req, res) => {
+    try {
+        const project = await Project.findOne({ _id: req.params.id, user: req.user.id });
+        if (!project) {
+            return res.status(404).json({ message: 'Project not found or you do not have authorization to update it.' });
         }
 
         const { name, description, dueDate } = req.body;
-        project.name = name || project.name;
-        project.description = description || project.description;
-        project.dueDate = dueDate || project.dueDate;
-
-        if (dueDate != undefined){
-            project.dueDate = dueDate;
-        }
+        if (name !== undefined) project.name = name;
+        if (description !== undefined) project.description = description;
+        if (dueDate !== undefined) project.dueDate = dueDate;
 
         const updatedProject = await project.save();
         res.json(updatedProject);
-    
-    } catch (err){
+    } catch (err) {
         res.status(400).json({ message: err.message });
     }
 });
 
-module.exports = router;
+export default router;

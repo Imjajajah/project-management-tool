@@ -12,8 +12,14 @@ function HomePage() {
     return (
         <Layout>
             <div className="row">
-                <ProjectList selectedProject={selectedProject} onProjectSelect={handleProjectSelect}/>
-                <TaskList selectedProject={selectedProject}/>
+                <div className="col-md-5">
+                    <ProjectList selectedProject={selectedProject} onProjectSelect={handleProjectSelect}/>
+                </div>
+                
+                <div className="col-md-7">
+                    <TaskList selectedProject={selectedProject}/>
+                </div>
+                
             </div>
         </Layout>
     );

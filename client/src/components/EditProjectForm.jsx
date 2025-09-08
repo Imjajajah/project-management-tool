@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getToken } from '../utils/api';
 
 function EditProjectForm({ project, onUpdate, onCancel }) {
     const [name, setName] = useState(project.name);
@@ -12,10 +13,12 @@ function EditProjectForm({ project, onUpdate, onCancel }) {
 
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
+            const token = getToken();
             const response = await fetch(`${serverUrl}/api/projects/${project._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'x-auth-token': token,
                 },
                 body: JSON.stringify(updatedProject),
             });

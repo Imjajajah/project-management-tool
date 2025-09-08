@@ -1,12 +1,13 @@
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import usersRoutes from './routes/users.js';
+import projectRoutes from './routes/projects.js';
+import taskRoutes from './routes/tasks.js';
 
-const express = require('express');
 const app = express();
-const cors = require('cors');
-const mongoose = require('mongoose');
-
-const projectRoutes = require('./routes/projects');
-const taskRoutes = require('./routes/tasks');
+dotenv.config();
 
 const PORT = process.env.PORT || 8000;
 const MONGO_URI = 'mongodb://mongodb:27017/project-tool-db';
@@ -21,9 +22,10 @@ app.use(cors());
 app.use(express.json());
 
 // Use the routers
-app.use('/api/projects', projectRoutes); // For project creation and listing
-app.use('/api/projects', taskRoutes);   // For adding and getting tasks for a specific project
-app.use('/api', taskRoutes);            // For updating and deleting a single task
+app.use('/api/users', usersRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/projects', taskRoutes);
+app.use('/api', taskRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
