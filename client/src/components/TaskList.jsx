@@ -25,12 +25,11 @@ function TaskList({ selectedProject }) {
             }
         });
     }
-    
-    // UPDATED: Added getToken() call to correctly retrieve the token
+
     const fetchTasks = async (projectId) => {
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
-            const token = getToken();
+            const token = getToken(); // Retrieve the token here
             const response = await fetch(`${serverUrl}/api/projects/${projectId}/tasks`, {
                 headers: { 
                     'x-auth-token': token 
@@ -96,6 +95,7 @@ function TaskList({ selectedProject }) {
             } else {
                 newSelectedTasks = [...prevSelectedTasks, taskId];
             }
+            // Hide the tip if any tasks are selected
             if (newSelectedTasks.length > 0) {
                 setShowTip(false);
             }
@@ -103,14 +103,20 @@ function TaskList({ selectedProject }) {
         });
     };
 
-    // UPDATED: Added the `try/catch` block and token header for the delete fetch
     const handleDeleteTask = async (taskId) => {
         const originalTasks = tasks;
         setTasks(prevTasks => prevTasks.filter(t => t._id !== taskId));
-        
+
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
             const token = getToken();
+            await fetch(`${serverUrl}/api/tasks/${taskId}`, {
+                method: 'DELETE',
+                headers: {
+                    'x-auth-token': token
+                },
+            });
+
             const result = await Swal.fire({
                 title: 'Task deleted!',
                 text: 'You can undo this action.',
@@ -129,12 +135,7 @@ function TaskList({ selectedProject }) {
                 console.log('Task deletion undone.');
             } else {
                 try {
-                    await fetch(`${serverUrl}/api/tasks/${taskId}`, { 
-                        method: 'DELETE',
-                        headers: {
-                            'x-auth-token': token,
-                        }
-                    });
+                    await fetch(`${serverUrl}/api/tasks/${taskId}`, { method: 'DELETE' });
                     console.log('Task permanently deleted.');
                 } catch (error) {
                     console.error("Error deleting task:", error);
@@ -142,13 +143,13 @@ function TaskList({ selectedProject }) {
                 }
             }
         } catch (error) {
-            console.error("Error with sweet alert:", error);
-            setTasks(originalTasks);
+            console.error("Error deleting task:", error);
+            setTasks(originalTasks); // Revert UI if the initial API call fails
         }
     };
 
-    // UPDATED: Added the `try/catch` block and token header for the bulk delete fetch
     const handleDeleteSelected = async () => {
+        // Step 1: Show the initial confirmation using Swal.fire directly
         const confirmationResult = await Swal.fire({
             title: `Are you sure?`,
             text: `This will permanently delete ${selectedTasks.length} selected task(s)!`,
@@ -161,10 +162,12 @@ function TaskList({ selectedProject }) {
 
         if (confirmationResult.isConfirmed) {
             const originalTasks = tasks;
+            // Step 2: Optimistically update the UI by filtering out the selected tasks
             setTasks(prevTasks => prevTasks.filter(t => !selectedTasks.includes(t._id)));
             
             const serverUrl = import.meta.env.VITE_SERVER_URL;
 
+            // Step 3: Show the "undo" toast
             const undoResult = await Swal.fire({
                 title: 'Tasks deleted!',
                 text: `You can undo this action.`,
@@ -179,24 +182,25 @@ function TaskList({ selectedProject }) {
             });
 
             if (undoResult.dismiss === Swal.DismissReason.cancel) {
+                // Step 4a: If the user clicks 'Undo', revert the UI state
                 setTasks(originalTasks);
                 setSelectedTasks([]);
                 console.log('Bulk task deletion undone.');
             } else {
+                // Step 4b: If the toast is dismissed, proceed with the permanent deletion via API
                 try {
                     const ids = selectedTasks.join(',');
-                    const token = getToken();
                     await fetch(`${serverUrl}/api/tasks/bulk-delete?ids=${ids}`, {
                         method: 'DELETE',
                         headers: {
-                            'x-auth-token': token,
-                        }
+                            'x-auth-token': getToken()
+                        },
                     });
                     setSelectedTasks([]);
                     console.log('Tasks permanently deleted.');
                 } catch (error) {
                     console.error("Error deleting selected tasks:", error);
-                    setTasks(originalTasks);
+                    setTasks(originalTasks); // Revert the UI state if the API call fails
                     setSelectedTasks([]);
                 }
             }
@@ -214,7 +218,7 @@ function TaskList({ selectedProject }) {
     return (
         <>
            {selectedProject ? (
-                <div className="card bg-white text-dark shadow-lg border-0 min-h-750">
+                <div className="card bg-white text-dark shadow-lg border-0 min-h-75">
                     <div className="card-header border-0 bg-white text-start">
                         <div className="d-flex justify-content-between align-items-center">
                             <h2 className="mb-0">Tasks for {selectedProject.name}</h2>

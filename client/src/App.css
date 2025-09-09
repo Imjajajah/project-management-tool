@@ -1,11 +1,10 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
 #root {
-  
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
+
 
 .logo {
   height: 6em;
@@ -56,6 +55,6 @@
     width: 20% !important;
 }
 
-.min-h-750 {
-  min-height: 750px;
+.min-h-75 {
+  min-height: 75vh;
 }

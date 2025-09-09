@@ -1,27 +1,13 @@
-import { useState } from 'react';
-import Layout from '../components/layout/Layout';
-import ProjectList from '../components/ProjectList';
-import TaskList from '../components/TaskList';
-import '../App.css';
+import React from 'react';
 
 function HomePage() {
-    const [selectedProject, setSelectedProject] = useState(null);
-
-    const handleProjectSelect = (project) => setSelectedProject(project);
-
     return (
-        <Layout>
-            <div className="row">
-                <div className="col-md-5">
-                    <ProjectList selectedProject={selectedProject} onProjectSelect={handleProjectSelect}/>
-                </div>
-                
-                <div className="col-md-7">
-                    <TaskList selectedProject={selectedProject}/>
-                </div>
-                
-            </div>
-        </Layout>
+        <div className="text-center p-5 mt-5">
+            <h1 className="display-4">Welcome to Your Project Manager!</h1>
+            <p className="lead text-secondary mt-3">
+                Select "Projects" from the navigation menu to view and manage your projects.
+            </p>
+        </div>
     );
 }
 

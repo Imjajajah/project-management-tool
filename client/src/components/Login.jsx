@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useAuth } from './AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { login } = useAuth();
+    const navigate = useNavigate();
     const serverUrl = import.meta.env.VITE_SERVER_URL;
 
     const handleSubmit = async (e) => {
@@ -21,7 +24,17 @@ const Login = () => {
             if (response.ok){
                 const data = await response.json();
                 login(data.user, data.token);
-                Swal.fire('Success!', 'Logged in successfully!', 'success');
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Logged in successfully!',
+                    icon: 'success',
+                    timer: 1500,
+                    timerProgressBar: true,
+                    showConfirmButton: false 
+                }).then(() => {
+                   
+                    navigate('/');
+                });
             } else {
                 const errorData = await response.json();
                 Swal.fire('Error!', errorData.message || 'Login failed.', 'error');

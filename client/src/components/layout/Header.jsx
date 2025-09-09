@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 
-const Navbar = () => {
+const Header = () => {
     const { user, logout } = useAuth();
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
             <div className="container-fluid">
                 <Link to="/" className="navbar-brand">
                     <i className="bi bi-house-door-fill me-1"></i>
@@ -45,4 +45,4 @@ const Navbar = () => {
     );
 };
 
-export default Navbar;
+export default Header;

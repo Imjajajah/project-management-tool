@@ -89,7 +89,7 @@ function ProjectList({ selectedProject, onProjectSelect }) {
     const handleProjectDeleted = async (projectId) => {
         Swal.fire({
             title: 'Are you sure?',
-            text: "You won't be able to revert this!",
+            text: "This will permanently delete the project and all associated tasks. You will not be able to undo this action.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
@@ -207,7 +207,7 @@ function ProjectList({ selectedProject, onProjectSelect }) {
 
     return (
         <>
-            <div className="card bg-white text-dark shadow-lg border-0 min-h-750">
+            <div className="card bg-white text-dark shadow-lg border-0 min-h-75">
                 <div className="card-header border-0 bg-white text-start d-flex justify-content-between align-items-center">
                     <h2>Projects</h2>
                     <button onClick={handleAddClick} className="btn btn-primary btn-lg">
