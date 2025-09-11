@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { getToken } from '../utils/api';
+import Swal from 'sweetalert2';
 
 const AddProjectForm = ({ onProjectAdded, onCancel }) => {
     const [name, setName] = useState('');
@@ -10,13 +11,20 @@ const AddProjectForm = ({ onProjectAdded, onCancel }) => {
         e.preventDefault();
         if (!name.trim()) return;
 
-        // UPDATED: Cleaner object creation using destructuring
         const newProject = {
             name,
             description,
-            // Include dueDate only if it's been set
             ...(dueDate && { dueDate: new Date(dueDate).toISOString() }),
         };
+
+        // Client-side date validation
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (dueDate && new Date(dueDate) < today) {
+            Swal.fire('Error!', 'Due date cannot be in the past.', 'error');
+            return;
+        }
 
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
@@ -35,11 +43,14 @@ const AddProjectForm = ({ onProjectAdded, onCancel }) => {
                 setName('');
                 setDescription('');
                 setDueDate('');
+                Swal.fire('Success', 'Project added successfully', 'success');
             } else {
-                console.error('Failed to add project');
+                const errorData = await response.json();
+                Swal.fire('Error!', errorData.message || 'Failed to add project.', 'error');
             }
         } catch (error) {
             console.error('Error adding project:', error);
+            Swal.fire('Error!', 'An error occurred. Please try again.', 'error');
         }
     };
 

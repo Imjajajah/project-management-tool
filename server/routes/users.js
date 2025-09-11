@@ -1,17 +1,15 @@
-import express from 'express'; 
+import express from 'express';
 const router = express.Router();
-
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-
 router.post('/register', async (req, res) => {
     try {
-        const { username, email, password} = req.body;
+        const { username, email, password } = req.body;
 
-        const existingUser = await User.findOne( { email });
-        if (existingUser){
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
             return res.status(400).json({ message: 'User with this email already exists.' });
         }
 
@@ -29,10 +27,10 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     try {
-        const {email, password} = req.body;
+        const { email, password } = req.body;
 
         const user = await User.findOne({ email });
-        if (!user){
+        if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
@@ -42,9 +40,9 @@ router.post('/login', async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: user._id, username: user.username},
+            { id: user._id, username: user.username },
             process.env.JWT_SECRET,
-            { expiresIn: '1h'}
+            { expiresIn: '1h' }
         );
 
         res.status(200).json({
@@ -60,6 +58,12 @@ router.post('/login', async (req, res) => {
     } catch (err) {
         res.status(400).json({ message: 'Server error during login.', error: err.message });
     }
+});
+
+// Since the client side is still calling this, we will add it back, but
+// with a simple error message as it's not being used for this token flow.
+router.post('/refresh-token', (req, res) => {
+    return res.status(400).json({ message: 'Refresh token not needed for this authentication flow.' });
 });
 
 export default router;
