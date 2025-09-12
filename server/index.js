@@ -7,10 +7,12 @@ import projectRoutes from './routes/projects.js';
 import taskRoutes from './routes/tasks.js';
 
 const app = express();
+
+// Load environment variables. This is needed for local development. Render provides them automatically in production.
 dotenv.config();
 
 const PORT = process.env.PORT || 8000;
-const MONGO_URI = 'mongodb://mongodb:27017/project-tool-db';
+const MONGO_URI = process.env.MONGO_URI; // Correctly uses the environment variable
 
 // Connect to the database
 mongoose.connect(MONGO_URI)
