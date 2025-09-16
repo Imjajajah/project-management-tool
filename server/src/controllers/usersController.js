@@ -1,10 +1,8 @@
-import express from 'express';
-const router = express.Router();
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import User from '../models/UserModel.js';
 
-router.post('/register', async (req, res) => {
+export const registerUser = async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
@@ -23,9 +21,9 @@ router.post('/register', async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: 'Server error during registration.', error: err.message });
     }
-});
+};
 
-router.post('/login', async (req, res) => {
+export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -58,12 +56,8 @@ router.post('/login', async (req, res) => {
     } catch (err) {
         res.status(400).json({ message: 'Server error during login.', error: err.message });
     }
-});
+};
 
-// Since the client side is still calling this, we will add it back, but
-// with a simple error message as it's not being used for this token flow.
-router.post('/refresh-token', (req, res) => {
+export const refreshToken = (req, res) => {
     return res.status(400).json({ message: 'Refresh token not needed for this authentication flow.' });
-});
-
-export default router;
+};

@@ -1,14 +1,8 @@
-import express from 'express';
-const router = express.Router();
-import Task from '../models/Task.js';
-import Project from '../models/Project.js';
-import auth from '../middleware/auth.js';
-import mongoose from 'mongoose';
-const { ObjectId } = mongoose.Types;
+import Task from '../models/TaskModel.js';
+import Project from '../models/ProjectModel.js';
 
-
-// GET all tasks for a specific project for the authenticated user
-router.get('/:projectId/tasks', auth, async (req, res) => {
+// GET all tasks for a specific project
+export const getTasksByProjectId = async (req, res) => {
     try {
         const { projectId } = req.params;
 
@@ -22,35 +16,35 @@ router.get('/:projectId/tasks', auth, async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
-});
+};
 
 // POST a new task
-router.post('/:projectId/tasks', auth, async (req, res) => {
+export const createTask = async (req, res) => {
     const { name, dueDate } = req.body;
     const { projectId } = req.params;
 
-    const project = await Project.findOne({ _id: projectId, user: req.user.id });
-    if (!project) {
-        return res.status(404).json({ message: 'Project not found or you do not have authorization to add a task to it.' });
-    }
-
-    const task = new Task({
-        name,
-        project: projectId,
-        dueDate,
-        user: req.user.id
-    });
-
     try {
+        const project = await Project.findOne({ _id: projectId, user: req.user.id });
+        if (!project) {
+            return res.status(404).json({ message: 'Project not found or you do not have authorization to add a task to it.' });
+        }
+
+        const task = new Task({
+            name,
+            project: projectId,
+            dueDate,
+            user: req.user.id
+        });
+
         const newTask = await task.save();
         res.status(201).json(newTask);
-    } catch (err) { // Changed 'error' to 'err' for consistency
+    } catch (err) {
         res.status(400).json({ message: err.message });
     }
-});
+};
 
 // PUT/PATCH to update a task
-router.put('/tasks/:taskId', auth, async (req, res) => {
+export const updateTask = async (req, res) => {
     try {
         const task = await Task.findOne({ _id: req.params.taskId, user: req.user.id });
 
@@ -58,7 +52,7 @@ router.put('/tasks/:taskId', auth, async (req, res) => {
             return res.status(404).json({ message: 'Task not found or you do not have authorization to update it.' });
         }
 
-        const { name, completed, dueDate } = req.body; // Corrected 'complete' to 'completed'
+        const { name, completed, dueDate } = req.body;
         
         if (name !== undefined) task.name = name;
         if (completed !== undefined) task.completed = completed;
@@ -69,10 +63,10 @@ router.put('/tasks/:taskId', auth, async (req, res) => {
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
-});
+};
 
 // DELETE multiple tasks
-router.delete('/tasks/bulk-delete', auth, async (req, res) => {
+export const bulkDeleteTasks = async (req, res) => {
     try {
         const ids = req.query.ids.split(',');
         const result = await Task.deleteMany({ _id: { $in: ids }, user: req.user.id });
@@ -80,14 +74,14 @@ router.delete('/tasks/bulk-delete', auth, async (req, res) => {
         if (result.deletedCount === 0) {
             return res.status(404).json({ message: 'No tasks found or you do not have authorization to delete them.' });
         }
-        res.json({ message: 'Tasks deleted successfully', deletedCount: result.deletedCount }); // Corrected typo: 'deleteCount' to 'deletedCount'
+        res.json({ message: 'Tasks deleted successfully', deletedCount: result.deletedCount });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
-});
+};
 
 // DELETE a single task
-router.delete('/tasks/:taskId', auth, async (req, res) => {
+export const deleteTask = async (req, res) => {
     try {
         const deletedTask = await Task.findOneAndDelete({ _id: req.params.taskId, user: req.user.id });
 
@@ -98,6 +92,4 @@ router.delete('/tasks/:taskId', auth, async (req, res) => {
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
-});
-
-export default router;
+};

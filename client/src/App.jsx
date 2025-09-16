@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './components/AuthContext';
+import AuthSuccess from './pages/AuthSuccess';
 import HomePage from './pages/HomePage';
 import Login from './components/Login';
 import ProjectPage from './pages/ProjectPage';
@@ -39,6 +40,8 @@ function App() {
                     {/* Public routes */}
                     <Route path="/login" element={<Login/>} />
                     <Route path="/register" element={<Register/> } />
+
+                    <Route path="/auth-success" element={<AuthSuccess />} />
                 </Routes>
             </Layout>
         </Router>
