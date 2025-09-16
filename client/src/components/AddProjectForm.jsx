@@ -6,10 +6,18 @@ const AddProjectForm = ({ onProjectAdded, onCancel }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [dueDate, setDueDate] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false); // New state variable
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!name.trim()) return;
+        
+        // Prevent form submission if a request is already in progress
+        if (isSubmitting) return;
+
+        if (!name.trim()) {
+            Swal.fire('Error!', 'Project name is required.', 'error');
+            return;
+        }
 
         const newProject = {
             name,
@@ -25,6 +33,9 @@ const AddProjectForm = ({ onProjectAdded, onCancel }) => {
             Swal.fire('Error!', 'Due date cannot be in the past.', 'error');
             return;
         }
+        
+        // Set state to disable the button
+        setIsSubmitting(true); 
 
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
@@ -51,6 +62,9 @@ const AddProjectForm = ({ onProjectAdded, onCancel }) => {
         } catch (error) {
             console.error('Error adding project:', error);
             Swal.fire('Error!', 'An error occurred. Please try again.', 'error');
+        } finally {
+            // Re-enable the button after the request is complete
+            setIsSubmitting(false);
         }
     };
 
@@ -68,7 +82,6 @@ const AddProjectForm = ({ onProjectAdded, onCancel }) => {
                     Description
                     <span className="text-danger ms-1">*</span>
                 </label>
-                
                 <textarea className="form-control" id="projectDescription" rows="3" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Enter a brief description"></textarea>
             </div>
             <div className="mb-3 text-start">
@@ -76,8 +89,10 @@ const AddProjectForm = ({ onProjectAdded, onCancel }) => {
                 <input type="date" className="form-control" id="projectDueDate" value={dueDate} onChange={(e) => setDueDate(e.target.value)}/>
             </div>
             <div className="d-flex justify-content-end gap-2">
-                <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Add Project</button>
+                <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={isSubmitting}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                    {isSubmitting ? 'Adding...' : 'Add Project'}
+                </button>
             </div>
         </form>
     );
