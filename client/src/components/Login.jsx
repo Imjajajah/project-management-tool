@@ -1,4 +1,3 @@
-///Users/jarreyes/Documents/PROGRAMS/project-management-tool/client/src/components/Login.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -49,6 +48,10 @@ const Login = () => {
         }
     };
 
+    const handleGoogleLogin = () => {
+        window.open(`${serverUrl}/api/auth/google`, 'google-auth-popup', 'width=500,height=600');
+    };
+
     return (
         <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
             <div className="card shadow-lg p-4" style={{ minWidth: '400px' }}>
@@ -64,10 +67,9 @@ const Login = () => {
                     </div>
                     <button type="submit" className="btn btn-primary w-100">Log In</button>
                     
-                    {/* The button now triggers a full-page redirect. */}
                     <button
                         type="button"
-                        onClick={() => window.location.href = `${serverUrl}/api/auth/google`}
+                        onClick={handleGoogleLogin}
                         className="btn btn-danger w-100 mt-3"
                     >
                         Sign in with Google

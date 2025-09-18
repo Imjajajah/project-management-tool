@@ -1,6 +1,6 @@
-///Users/jarreyes/Documents/PROGRAMS/project-management-tool/client/src/components/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import { getToken, setToken, removeToken } from '../utils/api';
+import Swal from 'sweetalert2';
 
 const AuthContext = createContext();
 
@@ -11,34 +11,40 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const serverUrl = import.meta.env.VITE_SERVER_URL;
 
-    // This effect handles both initial auth check and updates from a postMessage
-    useEffect(() => {
-        const handleAuth = async (token) => {
-            if (token) {
-                try {
-                    const profileResponse = await fetch(`${serverUrl}/api/auth/profile`, {
-                        headers: { 'x-auth-token': token }
+    const handleAuth = async (token) => {
+        if (token) {
+            try {
+                const profileResponse = await fetch(`${serverUrl}/api/auth/profile`, {
+                    headers: { 'x-auth-token': token }
+                });
+                if (profileResponse.ok) {
+                    const userData = await profileResponse.json();
+                    setToken(token);
+                    setUser(userData);
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Logged in successfully!',
+                        icon: 'success',
+                        timer: 1500,
+                        timerProgressBar: true,
+                        showConfirmButton: false 
                     });
-                    if (profileResponse.ok) {
-                        const userData = await profileResponse.json();
-                        setToken(token);
-                        setUser(userData);
-                    } else {
-                        removeToken();
-                        setUser(null);
-                    }
-                } catch (error) {
-                    console.error('Failed to fetch user profile:', error);
+                } else {
                     removeToken();
                     setUser(null);
                 }
-            } else {
+            } catch (error) {
+                console.error('Failed to fetch user profile:', error);
+                removeToken();
                 setUser(null);
             }
-            setLoading(false);
-        };
+        } else {
+            setUser(null);
+        }
+        setLoading(false);
+    };
 
-        // Check for an existing token on app load
+    useEffect(() => {
         const initialToken = getToken();
         if (initialToken) {
             handleAuth(initialToken);
@@ -46,10 +52,8 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
         }
 
-        // Listen for messages from the new Google login tab
         const handleMessage = async (event) => {
-            const trustedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
-            if (trustedOrigins.includes(event.origin) && event.data.type === 'AUTH_SUCCESS') {
+            if (event.origin === window.location.origin && event.data.type === 'AUTH_SUCCESS') {
                 const { token } = event.data;
                 await handleAuth(token);
             }
@@ -79,3 +83,5 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+
+export default AuthContext;

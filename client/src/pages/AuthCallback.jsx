@@ -1,56 +1,53 @@
+///Users/jarreyes/Documents/PROGRAMS/project-management-tool/client/src/pages/AuthCallback.jsx
+
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../components/AuthContext';
+import { useLocation } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 const AuthCallback = () => {
-    const navigate = useNavigate();
     const location = useLocation();
-    const { login } = useAuth();
-    const serverUrl = import.meta.env.VITE_SERVER_URL;
-    
+
     useEffect(() => {
-        const handleGoogleLogin = async () => {
-            const query = new URLSearchParams(location.search);
-            const token = query.get('token');
+        const query = new URLSearchParams(location.search);
+        const token = query.get('token');
 
-            if (token) {
-                try {
-                    const profileResponse = await fetch(`${serverUrl}/api/auth/profile`, {
-                        headers: { 'x-auth-token': token }
-                    });
-                    
-                    if (profileResponse.ok) {
-                        const userData = await profileResponse.json();
-                        login(userData, token);
-                        
-                        Swal.fire({
-                            title: 'Success!',
-                            text: 'Logged in successfully!',
-                            icon: 'success',
-                            timer: 1500,
-                            timerProgressBar: true,
-                            showConfirmButton: false 
-                        }).then(() => {
-                            // After successful login and UI notification, redirect
-                            navigate('/', { replace: true });
-                        });
-                    } else {
-                        throw new Error('Failed to fetch user profile.');
-                    }
-                } catch (error) {
-                    console.error("Error during Google login:", error);
-                    Swal.fire('Error!', 'An error occurred during Google login. Please try again.', 'error');
-                    navigate('/login', { replace: true });
-                }
+        if (token) {
+            // Check if there is a window that opened this one.
+            if (window.opener) {
+                // Use postMessage to securely send the token to the original page.
+                window.opener.postMessage({ type: 'AUTH_SUCCESS', token }, window.location.origin);
+                // Close the pop-up window after sending the message.
+                window.close();
             } else {
-                // If no token, redirect to the login page
-                navigate('/login', { replace: true });
+                // If this page was opened directly (not in a pop-up), we can't post a message.
+                // We'll show a warning and let the user know.
+                Swal.fire({
+                    title: 'Authentication Complete!',
+                    text: 'Please close this window to return to your application.',
+                    icon: 'success',
+                    showConfirmButton: true,
+                });
             }
-        };
-
-        handleGoogleLogin();
-    }, [location.search, navigate, login, serverUrl]);
+        } else {
+            if (window.opener) {
+                Swal.fire({
+                    title: 'Authentication Failed!',
+                    text: 'Please try logging in again.',
+                    icon: 'error',
+                    showConfirmButton: true,
+                }).then(() => {
+                    window.close();
+                });
+            } else {
+                Swal.fire({
+                    title: 'Authentication Failed!',
+                    text: 'An error occurred during authentication. Please try again.',
+                    icon: 'error',
+                    showConfirmButton: true,
+                });
+            }
+        }
+    }, [location]);
 
     return (
         <div className="d-flex justify-content-center align-items-center vh-100">
