@@ -10,6 +10,7 @@ import {
 } from '../controllers/projectsController.js'; 
 
 // All routes now use the imported controller functions
+// Corrected: The /profile route should NOT be here.
 router.get('/', auth, getAllProjects);
 router.post('/', auth, createProject);
 router.get('/:id', auth, getProjectById);

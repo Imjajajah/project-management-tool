@@ -5,13 +5,15 @@ import Task from '../models/TaskModel.js';
 //GET all projects
 export const getAllProjects = async (req, res) => {
     try {
+     
+        console.log("Fetching projects for user ID:", req.user ? req.user._id : "User is not authenticated");
+        
         const projects = await Project.find({ user: req.user._id });
         res.json(projects);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
-
 //GET a specific project by ID
 export const getProjectById = async (req, res) => {
     try {
@@ -32,10 +34,18 @@ export const createProject = async (req, res) => {
         name, description, dueDate, user: req.user.id
     });
 
+    // ADD THIS LINE
+    console.log("Attempting to save new project:", project);
+
     try {
         const newProject = await project.save();
+
+        // ADD THIS LINE
+        console.log("Successfully saved project:", newProject);
+
         res.status(201).json(newProject);
     } catch (err) {
+        console.error("Error saving project:", err);
         res.status(400).json({ message: err.message });
     }
 };

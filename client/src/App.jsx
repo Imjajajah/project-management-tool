@@ -1,6 +1,7 @@
+///Users/jarreyes/Documents/PROGRAMS/project-management-tool/client/src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './components/AuthContext';
-import AuthSuccess from './pages/AuthSuccess';
+import AuthCallback from './pages/AuthCallback';
 import HomePage from './pages/HomePage';
 import Login from './components/Login';
 import ProjectPage from './pages/ProjectPage';
@@ -10,15 +11,14 @@ import './App.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function App() {
-    const { user, loading } = useAuth(); // Destructure loading from useAuth
+    const { user, loading } = useAuth();
 
-    // Show a loading spinner while the authentication state is being checked
     if (loading) {
         return (
             <div className="d-flex justify-content-center align-items-center vh-100">
                 <div className="spinner-border text-primary" role="status">
                     <span className="visually-hidden">Loading...</span>
-                </div>
+                </div> 
             </div>
         );
     }
@@ -27,7 +27,7 @@ function App() {
         <Router>
             <Layout>
                 <Routes>
-                    {/* Protected routes that require a logged-in user */}
+                    {/* Protected routes */}
                     <Route 
                         path="/" 
                         element={user ? <HomePage/> : <Navigate to="/login" replace/>}
@@ -41,7 +41,8 @@ function App() {
                     <Route path="/login" element={<Login/>} />
                     <Route path="/register" element={<Register/> } />
 
-                    <Route path="/auth-success" element={<AuthSuccess />} />
+                    {/* This route is essential for handling the Google OAuth redirect */}
+                    <Route path="/auth/callback" element={<AuthCallback />} />
                 </Routes>
             </Layout>
         </Router>

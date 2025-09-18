@@ -34,7 +34,6 @@ function ProjectList({ selectedProject, onProjectSelect }) {
     const fetchProjects = async () => {
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
-            // Get the token and add it to the headers
             const token = getToken();
             const response = await fetch(`${serverUrl}/api/projects`, {
                 headers: {
@@ -72,8 +71,12 @@ function ProjectList({ selectedProject, onProjectSelect }) {
             });
 
             if (response.ok) {
+                // Get the newly created project from the server response
                 const addedProject = await response.json();
+                
+                // Update the state directly by adding the new project
                 setProjects(prevProjects => [...prevProjects, addedProject]);
+                
                 Swal.fire('Success', 'Project added successfully', 'success');
                 handleModalClose();
             } else {
@@ -139,7 +142,6 @@ function ProjectList({ selectedProject, onProjectSelect }) {
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
             const token = getToken();
-            // Added `await` to the fetch call
             const response = await fetch(`${serverUrl}/api/projects/${updatedProject._id}`, {
                 method: 'PUT',
                 headers: {
@@ -163,7 +165,6 @@ function ProjectList({ selectedProject, onProjectSelect }) {
         }
     };
 
-    // Corrected useEffect to fetch projects only when a user is authenticated
     useEffect(() => {
         if (user) {
             fetchProjects();

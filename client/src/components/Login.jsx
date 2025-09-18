@@ -1,3 +1,4 @@
+///Users/jarreyes/Documents/PROGRAMS/project-management-tool/client/src/components/Login.jsx
 import { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -7,46 +8,16 @@ import Swal from 'sweetalert2';
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { login } = useAuth();
+    const { login, user, loading } = useAuth();
     const navigate = useNavigate();
     const serverUrl = import.meta.env.VITE_SERVER_URL;
 
-    // This useEffect hook listens for messages from the new window
-    // that handles the Google authentication.
     useEffect(() => {
-        const handleMessage = (event) => {
-            // Ensure the message is from a trusted source (your own app)
-            // and is the correct type.
-            if (event.origin === window.location.origin && event.data.type === 'AUTH_SUCCESS') {
-                const { token } = event.data;
-                if (token) {
-                    // Use your existing login logic from AuthContext
-                    login(null, token); 
-                    
-                    Swal.fire({
-                        title: 'Success!',
-                        text: 'Logged in successfully!',
-                        icon: 'success',
-                        timer: 1500,
-                        timerProgressBar: true,
-                        showConfirmButton: false 
-                    }).then(() => {
-                        // After successful login, navigate the user to the home page
-                        navigate('/');
-                    });
-                }
-            }
-        };
-
-        // Add the event listener when the component mounts
-        window.addEventListener('message', handleMessage);
-
-        // Cleanup function to remove the event listener when the component unmounts
-        return () => {
-            window.removeEventListener('message', handleMessage);
-        };
-    }, [login, navigate]);
-
+        if (user && !loading){
+            navigate('/');
+        }
+    }, [user, loading, navigate]);
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -67,9 +38,6 @@ const Login = () => {
                     timer: 1500,
                     timerProgressBar: true,
                     showConfirmButton: false 
-                }).then(() => {
-                   
-                    navigate('/');
                 });
             } else {
                 const errorData = await response.json();
@@ -96,10 +64,10 @@ const Login = () => {
                     </div>
                     <button type="submit" className="btn btn-primary w-100">Log In</button>
                     
-                    {/* The button below initiates the Google authentication in a new tab */}
+                    {/* The button now triggers a full-page redirect. */}
                     <button
                         type="button"
-                        onClick={() => window.open(`${serverUrl}/api/auth/google`, '_blank', 'noopener,noreferrer')}
+                        onClick={() => window.location.href = `${serverUrl}/api/auth/google`}
                         className="btn btn-danger w-100 mt-3"
                     >
                         Sign in with Google

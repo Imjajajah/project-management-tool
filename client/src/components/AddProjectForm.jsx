@@ -1,17 +1,15 @@
 import { useState } from 'react';
-import { getToken } from '../utils/api';
 import Swal from 'sweetalert2';
 
 const AddProjectForm = ({ onProjectAdded, onCancel }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [dueDate, setDueDate] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false); // New state variable
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Prevent form submission if a request is already in progress
         if (isSubmitting) return;
 
         if (!name.trim()) {
@@ -25,7 +23,6 @@ const AddProjectForm = ({ onProjectAdded, onCancel }) => {
             ...(dueDate && { dueDate: new Date(dueDate).toISOString() }),
         };
 
-        // Client-side date validation
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -34,36 +31,16 @@ const AddProjectForm = ({ onProjectAdded, onCancel }) => {
             return;
         }
         
-        // Set state to disable the button
         setIsSubmitting(true); 
 
         try {
-            const serverUrl = import.meta.env.VITE_SERVER_URL;
-            const token = getToken();
-            const response = await fetch(`${serverUrl}/api/projects`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-auth-token': token,
-                },
-                body: JSON.stringify(newProject),
-            });
-            if (response.ok) {
-                const addedProject = await response.json();
-                onProjectAdded(addedProject);
-                setName('');
-                setDescription('');
-                setDueDate('');
-                Swal.fire('Success', 'Project added successfully', 'success');
-            } else {
-                const errorData = await response.json();
-                Swal.fire('Error!', errorData.message || 'Failed to add project.', 'error');
-            }
+            await onProjectAdded(newProject);
+            setName('');
+            setDescription('');
+            setDueDate('');
         } catch (error) {
-            console.error('Error adding project:', error);
             Swal.fire('Error!', 'An error occurred. Please try again.', 'error');
         } finally {
-            // Re-enable the button after the request is complete
             setIsSubmitting(false);
         }
     };

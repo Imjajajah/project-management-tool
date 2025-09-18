@@ -1,39 +1,81 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+///Users/jarreyes/Documents/PROGRAMS/project-management-tool/client/src/components/AuthContext.jsx
+import { createContext, useContext, useState, useEffect } from 'react';
+import { getToken, setToken, removeToken } from '../utils/api';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(null);
     const [loading, setLoading] = useState(true);
+    const serverUrl = import.meta.env.VITE_SERVER_URL;
 
+    // This effect handles both initial auth check and updates from a postMessage
     useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
+        const handleAuth = async (token) => {
+            if (token) {
+                try {
+                    const profileResponse = await fetch(`${serverUrl}/api/auth/profile`, {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (profileResponse.ok) {
+                        const userData = await profileResponse.json();
+                        setToken(token);
+                        setUser(userData);
+                    } else {
+                        removeToken();
+                        setUser(null);
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch user profile:', error);
+                    removeToken();
+                    setUser(null);
+                }
+            } else {
+                setUser(null);
+            }
+            setLoading(false);
+        };
 
-        if (storedToken && storedUser) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
+        // Check for an existing token on app load
+        const initialToken = getToken();
+        if (initialToken) {
+            handleAuth(initialToken);
+        } else {
+            setLoading(false);
         }
-        setLoading(false);
-    }, []);
 
-    const login = (userData, userToken) => {
+        // Listen for messages from the new Google login tab
+        const handleMessage = async (event) => {
+            const trustedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+            if (trustedOrigins.includes(event.origin) && event.data.type === 'AUTH_SUCCESS') {
+                const { token } = event.data;
+                await handleAuth(token);
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+
+        return () => window.removeEventListener('message', handleMessage);
+    }, [serverUrl]);
+    
+
+    const login = (userData, token) => {
+        setToken(token);
         setUser(userData);
-        setToken(userToken);
-        localStorage.setItem('token', userToken);
-        localStorage.setItem('user', JSON.stringify(userData));
     };
 
     const logout = () => {
+        removeToken();
         setUser(null);
-        setToken(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
     };
 
-    const value = { user, token, login, logout, loading };
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    const value = { user, loading, login, logout };
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
