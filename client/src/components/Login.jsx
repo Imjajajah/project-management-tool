@@ -30,6 +30,7 @@ const Login = () => {
             if (response.ok){
                 const data = await response.json();
                 login(data.user, data.token);
+                // Only show the success message after a successful form submission
                 Swal.fire({
                     title: 'Success!',
                     text: 'Logged in successfully!',
@@ -51,6 +52,33 @@ const Login = () => {
     const handleGoogleLogin = () => {
         window.open(`${serverUrl}/api/auth/google`, 'google-auth-popup', 'width=500,height=600');
     };
+
+    useEffect(() => {
+        const handleMessage = async (event) => {
+            if (event.origin === window.location.origin && event.data.type === 'AUTH_SUCCESS') {
+                const { token } = event.data;
+                const profileResponse = await fetch(`${serverUrl}/api/auth/profile`, {
+                    headers: { 'x-auth-token': token }
+                });
+                if (profileResponse.ok) {
+                    const userData = await profileResponse.json();
+                    login(userData, token);
+                    // Only show the success message after a successful Google login
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Logged in successfully!',
+                        icon: 'success',
+                        timer: 1500,
+                        timerProgressBar: true,
+                        showConfirmButton: false 
+                    });
+                }
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, [login, serverUrl]);
 
     return (
         <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>

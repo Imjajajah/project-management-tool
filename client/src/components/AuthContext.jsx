@@ -11,6 +11,8 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const serverUrl = import.meta.env.VITE_SERVER_URL;
 
+    // This function handles fetching the user and setting the state, but it will
+    // no longer show a success message.
     const handleAuth = async (token) => {
         if (token) {
             try {
@@ -21,14 +23,6 @@ export const AuthProvider = ({ children }) => {
                     const userData = await profileResponse.json();
                     setToken(token);
                     setUser(userData);
-                    Swal.fire({
-                        title: 'Success!',
-                        text: 'Logged in successfully!',
-                        icon: 'success',
-                        timer: 1500,
-                        timerProgressBar: true,
-                        showConfirmButton: false 
-                    });
                 } else {
                     removeToken();
                     setUser(null);
@@ -56,6 +50,7 @@ export const AuthProvider = ({ children }) => {
             if (event.origin === window.location.origin && event.data.type === 'AUTH_SUCCESS') {
                 const { token } = event.data;
                 await handleAuth(token);
+                // The success message for the Google login is now triggered from Login.jsx
             }
         };
 
