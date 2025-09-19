@@ -10,18 +10,18 @@ import {
 } from '../controllers/tasksController.js';
 
 // GET all tasks for a specific project
-router.get('/:projectId/tasks', auth, getTasksByProjectId);
+router.get('/:projectId', auth, getTasksByProjectId);
 
-// POST a new task
-router.post('/:projectId/tasks', auth, createTask);
+// POST a new task for a specific project
+router.post('/:projectId', auth, createTask);
 
 // PUT/PATCH to update a task
-router.put('/tasks/:taskId', auth, updateTask);
+router.put('/:taskId', auth, updateTask);
 
 // DELETE multiple tasks
-router.delete('/tasks/bulk-delete', auth, bulkDeleteTasks);
+router.delete('/bulk-delete', auth, bulkDeleteTasks);
 
 // DELETE a single task
-router.delete('/tasks/:taskId', auth, deleteTask);
+router.delete('/:taskId', auth, deleteTask);
 
 export default router;

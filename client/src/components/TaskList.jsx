@@ -30,7 +30,7 @@ function TaskList({ selectedProject }) {
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
             const token = getToken(); // Retrieve the token here
-            const response = await fetch(`${serverUrl}/api/projects/${projectId}/tasks`, {
+            const response = await fetch(`${serverUrl}/api/tasks/${projectId}`, {
                 headers: { 
                     'x-auth-token': token 
                 }
@@ -44,10 +44,30 @@ function TaskList({ selectedProject }) {
 
     const handleAddTask = async () => {
         if (!newTaskName.trim() || !selectedProject) return;
+        
+        // **Client-side due date validation to provide immediate feedback**
+        if (newTaskDueDate) {
+            const taskDueDate = new Date(newTaskDueDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (taskDueDate < today) {
+                Swal.fire('Error!', 'Task due date cannot be in the past.', 'error');
+                return;
+            }
+
+            const currentYear = new Date().getFullYear();
+            const taskDueYear = taskDueDate.getFullYear();
+            if (taskDueYear > currentYear + 100) {
+                Swal.fire('Error!', 'Task due date cannot be more than 100 years in the future.', 'error');
+                return;
+            }
+        }
+
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
             const token = getToken();
-            const response = await fetch(`${serverUrl}/api/projects/${selectedProject._id}/tasks`, {
+            const response = await fetch(`${serverUrl}/api/tasks/${selectedProject._id}`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -58,12 +78,23 @@ function TaskList({ selectedProject }) {
                     dueDate: newTaskDueDate,
                 }),
             });
+
+            // **FIX 2: Check for a successful response before proceeding**
+            if (!response.ok) {
+                const errorData = await response.json();
+                Swal.fire('Error!', errorData.message || 'Failed to add task.', 'error');
+                return;
+            }
+            
             const newTask = await response.json();
             setTasks(prevTasks => [...prevTasks, newTask]);
             setNewTaskName('');
             setNewTaskDueDate('');
+
         } catch (error) {
+            // A network error or unparseable JSON will be caught here
             console.error("Error adding task:", error);
+            Swal.fire('Error!', 'An unexpected error occurred. Please try again.', 'error');
         }
     };
 
@@ -103,49 +134,49 @@ function TaskList({ selectedProject }) {
         });
     };
 
-    const handleDeleteTask = async (taskId) => {
+    const handleDeleteTask = (taskId) => {
         const originalTasks = tasks;
+        const taskToDelete = tasks.find(t => t._id === taskId);
+        
+        // Optimistically update the UI by removing the task
         setTasks(prevTasks => prevTasks.filter(t => t._id !== taskId));
-
-        try {
-            const serverUrl = import.meta.env.VITE_SERVER_URL;
-            const token = getToken();
-            await fetch(`${serverUrl}/api/tasks/${taskId}`, {
-                method: 'DELETE',
-                headers: {
-                    'x-auth-token': token
-                },
-            });
-
-            const result = await Swal.fire({
-                title: 'Task deleted!',
-                text: 'You can undo this action.',
-                icon: 'success',
-                toast: true,
-                position: 'bottom-end',
-                showConfirmButton: false,
-                showCancelButton: true,
-                cancelButtonText: 'Undo',
-                timer: 5000,
-                timerProgressBar: true
-            });
-
+        
+        const serverUrl = import.meta.env.VITE_SERVER_URL;
+        
+        // Show the undo toast and wait for the result
+        Swal.fire({
+            title: 'Task deleted!',
+            text: 'You can undo this action.',
+            icon: 'success',
+            toast: true,
+            position: 'bottom-end',
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'Undo',
+            timer: 5000, // Wait 5 seconds before permanent deletion
+            timerProgressBar: true
+        }).then((result) => {
             if (result.dismiss === Swal.DismissReason.cancel) {
+                // User clicked 'Undo', so revert the UI
                 setTasks(originalTasks);
-                console.log('Task deletion undone.');
             } else {
+                // The timer expired or the toast was dismissed, proceed with permanent deletion
                 try {
-                    await fetch(`${serverUrl}/api/tasks/${taskId}`, { method: 'DELETE' });
-                    console.log('Task permanently deleted.');
+                    fetch(`${serverUrl}/api/tasks/${taskId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'x-auth-token': getToken()
+                        },
+                    }).then(() => {
+                        console.log('Task permanently deleted.');
+                    });
                 } catch (error) {
                     console.error("Error deleting task:", error);
-                    setTasks(originalTasks);
+                    // If the permanent deletion fails, revert the UI state
+                    setTasks(originalTasks); 
                 }
             }
-        } catch (error) {
-            console.error("Error deleting task:", error);
-            setTasks(originalTasks); // Revert UI if the initial API call fails
-        }
+        });
     };
 
     const handleDeleteSelected = async () => {
