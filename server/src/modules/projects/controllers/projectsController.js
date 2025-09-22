@@ -1,5 +1,7 @@
+///Users/jarreyes/Documents/PROGRAMS/project-management-tool/server/src/controllers/projectsController.js
+
 import Project from '../models/ProjectModel.js';
-import Task from '../models/TaskModel.js';
+import Task from '../../tasks/models/TaskModel.js';
 
 
 //GET all projects

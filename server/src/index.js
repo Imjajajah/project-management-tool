@@ -1,12 +1,13 @@
+///Users/jarreyes/Documents/PROGRAMS/project-management-tool/server/src/index.js
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import session from 'express-session';
 import passport from 'passport';
-import usersRoutes from './routes/usersRoutes.js';
-import projectsRoutes from './routes/projectsRoutes.js';
-import tasksRoutes from './routes/tasksRoutes.js';
-import authRoutes from './routes/authRoutes.js'; // New routes for authentication
+import projectsRoutes from './modules/projects/routes/projectsRoutes.js';
+import tasksRoutes from './modules/tasks/routes/tasksRoutes.js';
+import authRoutes from './modules/auth/routes/authRoutes.js'; // New routes for authentication
 import connectDB from './config/db.js';
 import passportConfig from './config/passport.js'; // Import Passport.js configuration
 
@@ -37,7 +38,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Use the routers
-app.use('/api/users', usersRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/auth', authRoutes); 

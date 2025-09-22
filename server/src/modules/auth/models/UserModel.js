@@ -1,3 +1,5 @@
+///Users/jarreyes/Documents/PROGRAMS/project-management-tool/server/src/models/UserModel.js
+
 import mongoose, { Schema } from 'mongoose';
 
 const userSchema = new Schema({

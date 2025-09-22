@@ -1,13 +1,18 @@
-///Users/jarreyes/Documents/PROGRAMS/project-management-tool/server/src/routes/authRoutes.js
 import express from 'express';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
-import { getProfile } from '../controllers/authController.js';
+import { getProfile, registerUser, loginUser, refreshToken } from '../controllers/authController.js';
 import auth from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email']}));
+// Local authentication routes
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.post('/refresh-token', refreshToken);
+
+// Google OAuth routes
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get('/google/callback',
     passport.authenticate('google', { failureRedirect: '/login' }),
     (req, res) => {
@@ -16,14 +21,12 @@ router.get('/google/callback',
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
-
         const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
-        
-        // This is the key change: redirect to the client with the token as a URL parameter.
         res.redirect(`${clientUrl}/auth/callback?token=${token}`);
     }
 );
 
+// Protected route to get user profile
 router.get('/profile', auth, getProfile);
 
 export default router;

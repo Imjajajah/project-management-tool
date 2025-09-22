@@ -1,5 +1,7 @@
+///Users/jarreyes/Documents/PROGRAMS/project-management-tool/server/src/controllers/tasksController.js
+
 import Task from '../models/TaskModel.js';
-import Project from '../models/ProjectModel.js';
+import Project from '../../projects/models/ProjectModel.js';
 
 // GET all tasks for a specific project
 export const getTasksByProjectId = async (req, res) => {

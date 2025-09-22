@@ -1,6 +1,8 @@
+//Users/jarreyes/Documents/PROGRAMS/project-management-tool/server/src/routes/projectsRoutes.js
+
 import express from 'express';
 const router = express.Router();
-import auth from '../middleware/auth.js';
+import auth from '../../auth/middleware/auth.js';
 import {
     getAllProjects,
     getProjectById,
