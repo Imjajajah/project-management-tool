@@ -148,3 +148,25 @@ export const deleteTask = async (req, res) => {
         res.status(400).json({ message: err.message });
     }
 };
+
+// PUT/PATCH to update a task's status
+export const updateTaskStatus = async (req, res) => {
+    const { taskId } = req.params;
+    const { newStatus } = req.body;
+
+    try {
+        const task = await Task.findOne({ _id: taskId, user: req.user.id });
+
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found or you do not have authorization to update it.' });
+        }
+
+        task.status = newStatus;
+        task.completed = newStatus === 'done';
+
+        const updatedTask = await task.save();
+        res.json(updatedTask);
+    } catch (err) {
+        res.status(400).json({ message: err.message})
+    }
+}; 

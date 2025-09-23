@@ -58,3 +58,15 @@
 .min-h-75 {
   min-height: 75vh;
 }
+
+.task-list-container {
+  min-height: 100px; /* A reasonable minimum height */
+  background-color: #e2e4e6; /* A different color to clearly show the dropzone */
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.task-list-container.dragging-over {
+  background-color: #ced4da; /* Highlight color when dragging over */
+}

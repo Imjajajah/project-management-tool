@@ -1,5 +1,3 @@
-///Users/jarreyes/Documents/PROGRAMS/project-management-tool/server/src/routes/tasksRoutes.js
-
 import express from 'express';
 const router = express.Router();
 import auth from '../../auth/middleware/auth.js';
@@ -8,7 +6,8 @@ import {
     createTask,
     updateTask,
     bulkDeleteTasks,
-    deleteTask
+    deleteTask,
+    updateTaskStatus // Add this line
 } from '../controllers/tasksController.js';
 
 // GET all tasks for a specific project
@@ -19,6 +18,9 @@ router.post('/:projectId', auth, createTask);
 
 // PUT/PATCH to update a task
 router.put('/:taskId', auth, updateTask);
+
+// NEW: PUT to update a task's status
+router.put('/update-status/:taskId', auth, updateTaskStatus);
 
 // DELETE multiple tasks
 router.delete('/bulk-delete', auth, bulkDeleteTasks);

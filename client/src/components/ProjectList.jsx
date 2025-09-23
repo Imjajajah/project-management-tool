@@ -4,6 +4,7 @@ import { getToken } from '../utils/api';
 import AddProjectForm from './AddProjectForm';
 import EditProjectForm from './EditProjectForm';
 import ProjectModal from './modals/ProjectModal';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 function ProjectList({ selectedProject, onProjectSelect }) {
@@ -14,6 +15,7 @@ function ProjectList({ selectedProject, onProjectSelect }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState(null);
     const [sortDirection, setSortDirection] = useState('asc');
+    const navigate = useNavigate();
 
     const showSweetAlert = (title, text, confirmButtonText, action) => {
         Swal.fire({
@@ -251,6 +253,9 @@ function ProjectList({ selectedProject, onProjectSelect }) {
                                         <div className="btn-group" role="group">
                                             <button onClick={(e) => { e.stopPropagation(); onProjectSelect(project); }} className="btn btn-sm btn-outline-secondary" aria-label="View tasks" title="View Project">
                                                 <i className="bi bi-eye-fill text-info"></i> 
+                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); navigate(`/kanban/${project._id}`); }} className="btn btn-sm btn-outline-secondary" aria-label="View Kanban" title="View Kanban Board">
+                                                <i className="bi bi-columns-gap text-success"></i>
                                             </button>
                                             <button onClick={(e) => { e.stopPropagation(); handleEditClick(project); }} className="btn btn-sm btn-outline-secondary" aria-label="Edit project" title="Edit Project">
                                                 <i className="bi bi-pencil-square text-warning"></i>
