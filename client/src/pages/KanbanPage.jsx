@@ -13,6 +13,13 @@ function KanbanPage() {
     useEffect(() => {
         const fetchProject = async () => {
             if (!projectId) {
+
+                const lastProjectId = localStorage.getItem('lastKanbanProjectId');
+                if (lastProjectId) {
+                    navigate(`/kanban/${lastProjectId}`, { replace: true });
+                    return;
+                }
+
                 Swal.fire({
                     title: 'No Project Selected',
                     text: 'Please go back and select a project to view its Kanban board.',
@@ -38,6 +45,7 @@ function KanbanPage() {
                 }
                 const data = await response.json();
                 setProject(data);
+                localStorage.setItem('lastKanbanProjectId', projectId);
             } catch (error) {
                 console.error("Failed to fetch project:", error);
                 Swal.fire('Error', 'Project not found or you do not have permission to view it.', 'error').then(() => {

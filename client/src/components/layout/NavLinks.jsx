@@ -1,7 +1,14 @@
-import React from 'react';
+import React from 'react'; // Remove useState and useEffect imports
 import { Link } from 'react-router-dom';
 
 const NavLinks = () => {
+    
+    // FUNCTION TO GET THE LATEST URL
+    const getKanbanUrl = () => {
+        const lastProjectId = localStorage.getItem('lastKanbanProjectId');
+        return lastProjectId ? `/kanban/${lastProjectId}` : '/kanban';
+    };
+
     return ( 
         <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm sticky-top py-0">
             <div className="container-fluid">
@@ -17,7 +24,8 @@ const NavLinks = () => {
                         </Link>
                     </li>
                     <li className="nav-item">
-                        <Link className="nav-link text-primary py-2" to="/kanban">
+                        {/* USE THE FUNCTION TO GET THE LATEST URL */}
+                        <Link className="nav-link text-primary py-2" to={getKanbanUrl()}>
                             <i className="bi bi-list-task me-1"></i> Kanban
                         </Link>
                     </li>
