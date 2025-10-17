@@ -412,33 +412,10 @@ function KanbanBoard({ selectedProject }) {
                                                         className={`task-list-container ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
                                                     >
 
-                                                    {column.tasks.map((task, index) => (
-                                                        <Draggable key={task._id} draggableId={task._id} index={index}>
-                                                            {(provided, snapshot) => (
-                                                                <div
-                                                                    ref={provided.innerRef}
-                                                                    {...provided.draggableProps}
-                                                                    {...provided.dragHandleProps}
-                                                                    // ⭐ CORRECTED FIX: Focus on mandatory styles and merging
-                                                                    style={{
-                                                                        // Mandatory: Merge the library's required styles
-                                                                        ...provided.draggableProps.style,
-                                                                        // Mandatory: Add margin for spacing
-                                                                        margin: '0 0 8px 0',
-                                                                        // Highly Recommended: Ensure it looks like the card
-                                                                        backgroundColor: 'white', 
-                                                                        // Use a transform check to ensure smooth animation 
-                                                                        // (This usually fixes the jumping/offset issue)
-                                                                        transform: provided.draggableProps.style.transform,
-                                                                        // Optional: Visual change when dragging
-                                                                        boxShadow: snapshot.isDragging ? '3px 3px 10px rgba(0,0,0,0.2)' : 'none',
-                                                                    }}
-                                                                >
-                                                                    <TaskCard task={task} index={index} onDelete={handleDeleteTask} />
-                                                                </div>
-                                                            )}
-                                                        </Draggable>
-                                                    ))}
+                                                        {column.tasks.map((task, index) => (
+                                                            <TaskCard key={task._id} task={task} index={index} onDelete={handleDeleteTask}/>
+                                                        ))}
+                                                
                                                         {provided.placeholder}
 
                                                     </div>
