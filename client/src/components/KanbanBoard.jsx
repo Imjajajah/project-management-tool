@@ -1,163 +1,101 @@
 import { useEffect, useState } from 'react';
-
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-
 import TaskCard from './TaskCard';
-
 import Swal from 'sweetalert2';
-
 import { getToken } from '../utils/api';
 
-
-
-
+// --- CSS for simplified column styling ---
+const columnStyles = {
+    'todo': { 
+        headerClass: 'text-primary border-primary', // Blue for To Do
+        droppableBg: 'rgba(13, 110, 253, 0.05)', // Very light blue tint
+    },
+    'in-progress': { 
+        headerClass: 'text-warning border-warning', // Yellow for In Progress
+        droppableBg: 'rgba(255, 193, 7, 0.05)', // Very light yellow tint
+    },
+    'done': { 
+        headerClass: 'text-success border-success', // Green for Done
+        droppableBg: 'rgba(25, 135, 84, 0.05)', // Very light green tint
+    },
+};
 
 function KanbanBoard({ selectedProject }) {
-
     const [columns, setColumns] = useState({
-
         'todo': {title: 'To Do', tasks: [] },
-
         'in-progress': {title: 'In Progress', tasks: [] },
-
         'done': { title: 'Done', tasks: []},
-
     });
 
-
-
     const handleAddTask = async(e) => {
-
         const newTaskName = e.target.value.trim();
-
         if (e.key !== 'Enter' || !newTaskName || !selectedProject) return;
 
-
-
         try {
-
             const serverUrl = import.meta.env.VITE_SERVER_URL;
-
             const token = getToken();
-
             const response = await fetch(`${serverUrl}/api/tasks/${selectedProject._id}`, {
-
                 method: 'POST',
-
                 headers: {
-
                     'Content-Type': 'application/json',
-
                     'x-auth-token': token,
-
                 },
-
                 body: JSON.stringify({
-
                     name: newTaskName,
-
                     status: 'todo',
-
                 }),
-
             });
 
-
-
             if (!response.ok) {
-
                 const errorData = await response.json();
-
                 Swal.fire('Error!', errorData.message || 'Failed to add task.', 'error');
-
                 return;
-
             }
-
-
 
             const newTask = await response.json();
 
             setColumns(prevColumns => ({
-
                 ...prevColumns,
-
                 'todo': {
-
                     ...prevColumns['todo'],
-
                     tasks: [...prevColumns['todo'].tasks, newTask]
-
                 }
-
             }));
-
             e.target.value = '';
 
         } catch (error) {
-
             console.error("Error adding task:", error);
-
             Swal.fire('Error!', 'An unexpected error occurred. Please try again.', 'error');
-
         }
-
     };
 
-
-
     const fetchTasks = async (projectId) => {
-
         try {
-
             const serverUrl = import.meta.env.VITE_SERVER_URL;
-
             const token = getToken();
-
             const response = await fetch(`${serverUrl}/api/tasks/${projectId}`, {
-
                 headers: { 'x-auth-token': token }
-
             });
-
             const data = await response.json();
-
-
-
             const newColumns = {
-
                 'todo': { title: 'To Do', tasks: data.filter(t => t.status === 'todo') },
-
                 'in-progress': { title: 'In Progress', tasks: data.filter(t => t.status === 'in-progress') },
-
                 'done': { title: 'Done', tasks: data.filter(t => t.status === 'done' ) },
-
             };
 
             setColumns(newColumns);
 
         } catch (error) {
-
             console.error("Failed to fetch tasks:", error);
-
         }
-
     };
 
-
-
     const handleTaskStatusUpdate = async (taskId, newStatus) => {
-
         const serverUrl = import.meta.env.VITE_SERVER_URL;
-
         const token = getToken();
-
         const response = await fetch(`${serverUrl}/api/tasks/update-status/${taskId}`, {
-
             method: 'PUT',
-
             headers: {
-
                 'Content-Type': 'application/json',
 
                 'x-auth-token': token
@@ -215,7 +153,6 @@ function KanbanBoard({ selectedProject }) {
         const endColumn = columns[destination.droppableId];
 
         
-
         // --- Optimistic UI Update ---
 
 
@@ -317,13 +254,11 @@ function KanbanBoard({ selectedProject }) {
                 console.error("Failed to update task status on server:", error);
 
                 
-
                 // Show error and revert the UI state
 
                 Swal.fire('Error', 'Failed to save task status. Reverting change.', 'error');
 
                 
-
                 // Re-fetch tasks to revert the UI back to the server's state
 
                 if (selectedProject?._id) {
@@ -385,7 +320,6 @@ function KanbanBoard({ selectedProject }) {
                         <h2 className="mb-0">Tasks for {selectedProject.name}</h2>
 
                         
-
                     </div>
 
                     <div className="card-body">
@@ -394,46 +328,64 @@ function KanbanBoard({ selectedProject }) {
 
                             <div className="row flex-nowrap overflow-auto py-3">
 
-                                {Object.entries(columns).map(([columnId, column]) => (
+                                {Object.entries(columns).map(([columnId, column]) => {
+                                    // Get the specific styles for the current column
+                                    const styles = columnStyles[columnId] || {};
+                                    return (
+                                        <div key={columnId} className="col-md-4 mb-3 d-flex flex-column">
+                                            {/* Column Container: White background with a subtle shadow/border */}
+                                            <div 
+                                                className="kanban-column bg-white p-3 rounded-lg shadow-sm flex-fill border" 
+                                            >
+                                                {/* Column Title: Bold text with color-coded bottom border/text */}
+                                                <h4 className={`column-title fw-bold border-bottom pb-2 mb-3 ${styles.headerClass}`}>
+                                                    {column.title} ({column.tasks.length})
+                                                </h4>
+                                                <Droppable droppableId={columnId}>
+                                                    {(provided, snapshot) => (
+                                                        <div 
+                                                            ref={provided.innerRef}
+                                                            {...provided.droppableProps}
+                                                            className={`task-list-container rounded p-1 ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                                                            style={{ 
+                                                                minHeight: '50px', 
+                                                                backgroundColor: styles.droppableBg, // Use light tint here
+                                                                transition: 'background-color 0.2s ease',
+                                                            }}
+                                                        >
+                                                            {/* Input for adding new task - only for 'To Do' column */}
+                                                            {columnId === 'todo' && (
+                                                                <input
+                                                                    type="text"
+                                                                    className="form-control mb-3"
+                                                                    placeholder="Add a new task and press Enter"
+                                                                    onKeyDown={handleAddTask}
+                                                                />
+                                                            )}
 
-                                    <div key={columnId} className="col-md-4 mb-3 d-flex flex-column">
+                                                            {column.tasks.map((task, index) => (
+                                                                <TaskCard key={task._id} task={task} index={index} onDelete={handleDeleteTask}/>
+                                                            ))}
+                                                    
+                                                            {provided.placeholder}
 
-                                        <div className="kanban-column bg-light p-3 rounded-lg shadow-sm flex-fill">
+                                                        </div>
 
-                                            <h4 className="column-title">{column.title} ({column.tasks.length})</h4>
+                                                    )}
 
-                                            <Droppable droppableId={columnId}>
+                                                </Droppable>
 
-                                                {(provided, snapshot) => (
-
-                                                    <div 
-                                                        ref={provided.innerRef}
-                                                        {...provided.droppableProps}
-                                                        className={`task-list-container ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
-                                                    >
-
-                                                        {column.tasks.map((task, index) => (
-                                                            <TaskCard key={task._id} task={task} index={index} onDelete={handleDeleteTask}/>
-                                                        ))}
-                                                
-                                                        {provided.placeholder}
-
-                                                    </div>
-
-                                                )}
-
-                                            </Droppable>
+                                            </div>
 
                                         </div>
-
-                                    </div>
-
-                                ))}
+                                    );
+                                })}
 
                             </div>
 
                         </DragDropContext>
-
+                        {/* Task Input Field outside of DragDropContext to keep it clean, or use the one added inside the 'todo' column above */}
+                        {/* The task input was moved inside the 'todo' column to be more intuitive for a Kanban board. */}
                     </div>
 
                 </div>
@@ -471,8 +423,4 @@ function KanbanBoard({ selectedProject }) {
 }
 
 
-
 export default KanbanBoard;
-
-
-

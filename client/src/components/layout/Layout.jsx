@@ -18,8 +18,7 @@ const Layout = ({ children }) => {
                 <Header/>
                 {shouldShowNavLinks && <NavLinks />}
             </div>
-           
-            <main className="container-fluid my-4 flex-grow-1 d-flex flex-column h-100 px-5">
+            <main className="container-fluid my-4 flex-grow-1 d-flex flex-column h-100 px-3 px-md-5">
                 { children }
             </main>
             <Footer />

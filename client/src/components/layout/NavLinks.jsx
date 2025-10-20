@@ -1,4 +1,4 @@
-import React from 'react'; // Remove useState and useEffect imports
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 const NavLinks = () => {
@@ -10,22 +10,39 @@ const NavLinks = () => {
     };
 
     return ( 
-        <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm sticky-top py-0">
+        // Navbar Setup: Still permanently horizontal, uses a light theme.
+        <nav className="navbar navbar-light bg-light shadow-sm sticky-top py-0">
             <div className="container-fluid">
-                <ul className="navbar-nav">
+                
+                {/* Brand/Title Removed Here */}
+
+                {/* Links: Uses 'mx-auto' to center the links in the absence of a brand */}
+                <ul className="navbar-nav d-flex flex-row mx-auto">
+                    
                     <li className="nav-item">
-                        <Link className="nav-link text-primary me-3 py-2" to="/">
+                        <Link 
+                            className="nav-link text-dark py-2 ps-3 pe-3" 
+                            aria-current="page" 
+                            to="/"
+                        >
                             <i className="bi bi-house-door-fill me-1"></i> Home
                         </Link>
                     </li>
+                    
                     <li className="nav-item">
-                        <Link className="nav-link text-primary me-3 py-2" to="/projects">
+                        <Link 
+                            className="nav-link text-dark py-2 ps-3 pe-3" 
+                            to="/projects"
+                        >
                             <i className="bi bi-folder-fill me-1"></i> Projects
                         </Link>
                     </li>
+                    
                     <li className="nav-item">
-                        {/* USE THE FUNCTION TO GET THE LATEST URL */}
-                        <Link className="nav-link text-primary py-2" to={getKanbanUrl()}>
+                        <Link 
+                            className="nav-link text-dark py-2 ps-3 pe-3" 
+                            to={getKanbanUrl()}
+                        >
                             <i className="bi bi-list-task me-1"></i> Kanban
                         </Link>
                     </li>

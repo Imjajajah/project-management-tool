@@ -3,12 +3,55 @@ import TaskItem from './TaskItem';
 import Swal from 'sweetalert2';
 import { getToken } from '../utils/api';
 
+// --- CUSTOM STYLES FIX ---
+// The media query is modified to be more aggressive in stacking the inputs.
+const customTasklistStyles = `
+    .task-input-group {
+        display: flex; /* Ensure flex for desktop alignment */
+        gap: 0.5rem; /* Use gap for clean spacing on desktop */
+    }
+    .task-input-group .form-control {
+        flex-grow: 1; /* Ensure name input takes up most space */
+    }
+    .task-input-group .input-date {
+        max-width: 130px; /* Constrain date input size on desktop */
+        flex-shrink: 0;
+    }
+    .task-input-group .btn {
+        min-width: 80px; /* Ensure button doesn't shrink too much */
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 575.98px) {
+        /* On extra-small screens, stack inputs for better tapping experience */
+        .task-input-group {
+            flex-direction: column;
+            gap: 0; /* Reset gap when stacking */
+        }
+        .task-input-group .form-control {
+            width: 100% !important;
+        }
+        .task-input-group .input-date {
+            width: 100% !important; /* Full width for date input */
+            margin-top: 0.5rem; 
+            max-width: 100%; /* Override max-width constraint */
+        }
+        .task-input-group .btn {
+            width: 100% !important; /* Full width for button */
+            margin-top: 0.5rem;
+        }
+    }
+`;
+
+
 function TaskList({ selectedProject }) {
     const [tasks, setTasks] = useState([]);
     const [newTaskName, setNewTaskName] = useState('');
     const [newTaskDueDate, setNewTaskDueDate] = useState('');
     const [selectedTasks, setSelectedTasks] = useState([]);
     const [showTip, setShowTip] = useState(false);
+
+    // --- (All your logic functions: showSweetAlert, fetchTasks, handleAddTask, etc. remain unchanged) ---
 
     const showSweetAlert = (title, text, confirmButtonText, action) => {
         Swal.fire({
@@ -246,38 +289,50 @@ function TaskList({ selectedProject }) {
         }
     }, [selectedProject]);
 
+
     return (
         <>
+           <style>{customTasklistStyles}</style> {/* Apply custom styles here */}
            {selectedProject ? (
                 <div className="card bg-white text-dark shadow-lg border-0 min-h-75">
-                    <div className="card-header border-0 bg-white text-start">
-                        <div className="d-flex justify-content-between align-items-center">
-                            <h2 className="mb-0">Tasks for {selectedProject.name}</h2>
-                            <div className="d-flex align-items-center mt-2">
+                    {/* Header: Improved responsiveness */}
+                    <div className="card-header border-0 bg-white text-start py-3">
+                        <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+                            
+                            {/* Project Name & Tip */}
+                            <div className="d-flex align-items-start mb-2 mb-sm-0 me-3 flex-grow-1 min-w-0">
+                                <h2 className="mb-0 fs-5 text-truncate me-2" title={selectedProject.name}>
+                                    Tasks for {selectedProject.name}
+                                </h2>
+                                
+                                {/* Tip Icon/Message */}
                                 {selectedTasks.length === 0 && (
-                                    <>
-                                        {showTip && <p className="text-muted text-start text-xs mb-0 me-2">To delete multiple tasks, select the checkboxes</p>}
-                                        <button onClick={() => setShowTip(!showTip)} className="btn btn-link text-muted p-0 me-2" aria-label="Show tip">
+                                    <div className="d-flex align-items-center">
+                                        {showTip && <p className="text-muted small mb-0 me-2 d-none d-md-block">To delete multiple tasks, select the checkboxes</p>}
+                                        <button onClick={() => setShowTip(!showTip)} className="btn btn-link text-muted p-0" aria-label="Show tip">
                                             <i className="bi bi-info-circle"></i>
                                         </button>
-                                        
-                                    </>
+                                    </div>
                                 )}
                             </div>
+
+                            {/* Delete Selected Button */}
                             {selectedTasks.length > 0 && (
-                                <button onClick={handleDeleteSelected} className="btn btn-danger">
-                                    <i className="bi bi-trash-fill me-2"></i> Delete ({selectedTasks.length})
+                                <button onClick={handleDeleteSelected} className="btn btn-danger btn-sm flex-shrink-0">
+                                    <i className="bi bi-trash-fill me-1"></i> Delete ({selectedTasks.length})
                                 </button>
                             )}
                             
                         </div>
-                       
                     </div>
-                    <div className="card-body">
-                        <div className="input-group mb-3">
+                    
+                    <div className="card-body pt-3 pb-3">
+                        {/* Task Input: Uses custom class for mobile stacking */}
+                        {/* Removed input-group class to let custom flex control the layout */}
+                        <div className="d-flex mb-3 task-input-group"> 
                             <input
                                 type="text"
-                                className="form-control bg-white text-dark border-secondary w-60"
+                                className="form-control bg-white text-dark border-secondary"
                                 placeholder="New Task Name"
                                 value={newTaskName}
                                 onChange={(e) => setNewTaskName(e.target.value)}
@@ -289,15 +344,24 @@ function TaskList({ selectedProject }) {
                             />
                             <input
                                 type="date"
-                                className="form-control bg-white text-dark border-secondary w-20"
+                                // Added ms-sm-2 to create space between inputs on desktop
+                                className="form-control bg-white text-dark border-secondary input-date ms-sm-2"
                                 value={newTaskDueDate}
                                 onChange={(e) => setNewTaskDueDate(e.target.value)}
                             />
-                            <button onClick={handleAddTask} className="btn btn-success w-20">
-                                <i className="bi bi-plus-circle me-2"></i> Add Task
+                            <button 
+                                onClick={handleAddTask} 
+                                // Added ms-sm-2 to create space between date and button on desktop
+                                className="btn btn-success flex-shrink-0 ms-sm-2"
+                            >
+                                {/* Show Add Task text only on sm+ screens */}
+                                <i className="bi bi-plus-circle me-1"></i>
+                                <span className="d-none d-sm-inline">Add Task</span>
                             </button>
                         </div>
-                        <div className="mt-4">
+                        
+                        {/* Task List Container */}
+                        <div className="mt-4" style={{ maxHeight: 'calc(100vh - 400px)', overflowY: 'auto' }}>
                             {tasks.length > 0 ? (
                                 tasks.map(task => (
                                     <TaskItem
