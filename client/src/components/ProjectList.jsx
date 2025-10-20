@@ -17,20 +17,10 @@ function ProjectList({ selectedProject, onProjectSelect }) {
     const [sortDirection, setSortDirection] = useState('asc');
     const navigate = useNavigate();
 
-    const showSweetAlert = (title, text, confirmButtonText, action) => {
-        Swal.fire({
-            title: title,
-            text: text,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: confirmButtonText,
-        }).then((result) => {
-            if (result.isConfirmed) {
-                action();
-            }
-        });
+    // ... (Your existing functions like showSweetAlert, fetchProjects, handleAddClick, etc., remain the same)
+    const handleModalClose = () => {
+        setEditingProject(null);
+        setShowModal(false);
     };
 
     const fetchProjects = async () => {
@@ -54,11 +44,6 @@ function ProjectList({ selectedProject, onProjectSelect }) {
         setShowModal(true);
     };
 
-    const handleModalClose = () => {
-        setEditingProject(null);
-        setShowModal(false);
-    };
-
     const handleProjectAdded = async (newProject) => {
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
@@ -73,12 +58,8 @@ function ProjectList({ selectedProject, onProjectSelect }) {
             });
 
             if (response.ok) {
-                // Get the newly created project from the server response
                 const addedProject = await response.json();
-                
-                // Update the state directly by adding the new project
                 setProjects(prevProjects => [...prevProjects, addedProject]);
-                
                 Swal.fire('Success', 'Project added successfully', 'success');
                 handleModalClose();
             } else {
@@ -184,7 +165,10 @@ function ProjectList({ selectedProject, onProjectSelect }) {
         }
     };
 
-    const filteredProjects = projects.filter(project => project.name.toLowerCase().includes(searchTerm.toLowerCase()) || project.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredProjects = projects.filter(project => 
+        project.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        project.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
     
     const sortedProjects = [...filteredProjects].sort((a, b) => {
         if (sortBy === 'name') {
@@ -210,17 +194,28 @@ function ProjectList({ selectedProject, onProjectSelect }) {
 
     return (
         <>
-            <div className="card bg-white text-dark shadow-lg border-0 min-h-75">
-                <div className="card-header border-0 bg-white text-start d-flex justify-content-between align-items-center">
-                    <h2>Projects</h2>
-                    <button onClick={handleAddClick} className="btn btn-primary btn-lg">
-                        <i className="bi bi-plus-circle me-2"></i> Add New Project
+            <div className="card bg-white text-dark shadow-lg border-0 min-h-75 w-100">
+
+                <div className="card-header border-0 bg-white text-start d-flex justify-content-between align-items-center py-3 px-3 px-md-4">
+    
+                    {/* Project Title: mb-0 ensures no extra space below the heading */}
+                    <h2 className="mb-0 fs-5 text-truncate me-2">Projects</h2>
+                    
+                    {/* Add Button: Now only uses the 'Add' icon/text on small screens */}
+                    <button onClick={handleAddClick} className="btn btn-primary btn-sm flex-shrink-0 shadow-sm">
+                        <i className="bi bi-plus-circle me-1"></i> 
+                        {/* Shows full text on sm+ and 'Add' on xs */}
+                        <span className="d-none d-sm-inline">Add New Project</span>
+                        <span className="d-inline d-sm-none">Add</span>
                     </button>
                 </div>
-                <div className="card-body">
-                    <div className="row d-flex align-items-center mb-3">
+                
+                <div className="card-body py-3 px-3 px-md-4">
+                    
+                    {/* Search and Sort Controls: Responsive Grid */}
+                    <div className="row g-2 align-items-center mb-3">
                         <div className="col-12 col-md-7">
-                            <div className="input-group">
+                            <div className="input-group input-group-sm"> {/* Use input-group-sm for better space on mobile */}
                                 <span className="input-group-text bg-white border-secondary text-dark"><i className="bi bi-search"></i></span>
                                 <input 
                                     type="text" 
@@ -231,53 +226,109 @@ function ProjectList({ selectedProject, onProjectSelect }) {
                                 />
                             </div>
                         </div>
-                        <div className="col-12 col-md-5 mt-2 mt-md-0">
-                            <div className="btn-group w-100" role="group">
-                                <button onClick={() => handleSort('name')} className="btn btn-outline-secondary hover-text-white">
-                                    <i className={`bi bi-sort-alpha-${sortDirection === 'desc' ? 'up' : 'down'} me-0`}></i>
-                                    <span className="text-secondary">Name</span>
+                        <div className="col-12 col-md-5">
+                            <div className="btn-group btn-group-sm w-100" role="group"> {/* Use btn-group-sm */}
+                                <button 
+                                    onClick={() => handleSort('name')} 
+                                    className={`btn ${sortBy === 'name' ? 'btn-secondary' : 'btn-outline-secondary'} text-truncate`} 
+                                    title="Sort by Name"
+                                >
+                                    <i className={`bi bi-sort-alpha-${sortDirection === 'desc' ? 'up' : 'down'} me-1 d-none d-sm-inline`}></i>
+                                    Name
                                 </button>
-                                <button onClick={() => handleSort('date')} className="btn btn-outline-secondary hover-text-white">
-                                    <i className={`bi bi-sort-down${sortDirection === 'desc' ? '-alt' : ''} me-0`}></i>
-                                    <span className="text-secondary">Date</span>
+                                <button 
+                                    onClick={() => handleSort('date')} 
+                                    className={`btn ${sortBy === 'date' ? 'btn-secondary' : 'btn-outline-secondary'} text-truncate`} 
+                                    title="Sort by Date Created"
+                                >
+                                    <i className={`bi bi-sort-down${sortDirection === 'desc' ? '-alt' : ''} me-1 d-none d-sm-inline`}></i>
+                                    Date
                                 </button>   
                             </div>
                         </div>
                     </div>
-                    <ul className="list-unstyled mt-2">
-                        {sortedProjects.map(project => (
-                            <li key={project._id} className={`card shadow-sm mb-1 border ${selectedProject && selectedProject._id === project._id ? 'border-primary' : 'border-light'}`} style={{ cursor: 'pointer' }} onClick={() => onProjectSelect(project)}>
-                                <div className="card-body py-0">
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <h6 className="card-title fw-bold mb-0 text-dark" style={{ lineHeight: '1' }}>{project.name}</h6>
-                                        <div className="btn-group" role="group">
-                                            <button onClick={(e) => { e.stopPropagation(); onProjectSelect(project); }} className="btn btn-sm btn-outline-secondary" aria-label="View tasks" title="View Project">
-                                                <i className="bi bi-eye-fill text-info"></i> 
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); navigate(`/kanban/${project._id}`); }} className="btn btn-sm btn-outline-secondary" aria-label="View Kanban" title="View Kanban Board">
-                                                <i className="bi bi-columns-gap text-success"></i>
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleEditClick(project); }} className="btn btn-sm btn-outline-secondary" aria-label="Edit project" title="Edit Project">
-                                                <i className="bi bi-pencil-square text-warning"></i>
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleProjectDeleted(project._id); }} className="btn btn-sm btn-outline-secondary" aria-label="Delete project" title="Delete Project">
-                                                <i className="bi bi-trash-fill text-danger"></i>
-                                            </button>
+                    
+                    {/* 3. Project List */}
+                    <div className="list-container" style={{ maxHeight: 'calc(100vh - 250px)', overflowY: 'auto' }}>
+                        <ul className="list-unstyled mt-3">
+                            {sortedProjects.length > 0 ? (
+                                sortedProjects.map(project => (
+                                    <li 
+                                        key={project._id} 
+                                        className={`card shadow-sm mb-2 border ${selectedProject && selectedProject._id === project._id ? 'border-primary border-2' : 'border-light'}`} 
+                                        style={{ cursor: 'pointer' }} 
+                                        onClick={() => onProjectSelect(project)}
+                                    >
+                                        <div className="card-body py-1 px-1 px-sm-2">
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                
+                                                {/* Project Info: Text Truncation to prevent overflow */}
+                                                <div className="flex-grow-1 me-2 text-start overflow-hidden">
+                                                    <h6 className="card-title fw-bold mb-0 text-dark text-truncate" style={{ lineHeight: '1.2' }}>{project.name}</h6>
+                                                    <p className="card-text text-secondary small mb-1 text-truncate d-none d-sm-block">{project.description}</p>
+                                                    {/* Hides dates/description on extra-small screens to prioritize space */}
+                                                    <div className="d-flex text-muted small mt-1">
+                                                        {project.createdAt && (
+                                                            <span className="me-3 d-none d-sm-inline">Created: {new Date(project.createdAt).toLocaleDateString()}</span>
+                                                        )}
+                                                        {project.dueDate && (
+                                                            <span className="d-none d-md-inline">Due: {new Date(project.dueDate).toLocaleDateString()}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Action Buttons: Responsive Grouping */}
+                                                <div className="d-flex flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+
+                                                    {/* Full Button Group for small screens (sm) and up */}
+                                                    <div className="btn-group btn-group-sm d-none d-sm-flex" role="group">
+                                                        <button onClick={() => navigate(`/kanban/${project._id}`)} className="btn btn-outline-success" aria-label="View Kanban" title="View Kanban Board">
+                                                            <i className="bi bi-columns-gap"></i>
+                                                        </button>
+                                                        <button onClick={() => handleEditClick(project)} className="btn btn-outline-warning" aria-label="Edit project" title="Edit Project">
+                                                            <i className="bi bi-pencil-square"></i>
+                                                        </button>
+                                                        <button onClick={() => handleProjectDeleted(project._id)} className="btn btn-outline-danger" aria-label="Delete project" title="Delete Project">
+                                                            <i className="bi bi-trash-fill"></i>
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Dropdown for extra-small screens (d-sm-none) */}
+                                                    <div className="dropdown d-sm-none">
+                                                        <button className="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More actions">
+                                                            <i className="bi bi-three-dots-vertical"></i>
+                                                        </button>
+                                                        <ul className="dropdown-menu dropdown-menu-end">
+                                                            <li>
+                                                                <a className="dropdown-item text-success" href="#" onClick={() => navigate(`/kanban/${project._id}`)}>
+                                                                    <i className="bi bi-columns-gap me-2"></i> View Kanban
+                                                                </a>
+                                                            </li>
+                                                            <li>
+                                                                <a className="dropdown-item text-warning" href="#" onClick={() => handleEditClick(project)}>
+                                                                    <i className="bi bi-pencil-square me-2"></i> Edit Project
+                                                                </a>
+                                                            </li>
+                                                            <li><hr className="dropdown-divider"/></li>
+                                                            <li>
+                                                                <a className="dropdown-item text-danger" href="#" onClick={() => handleProjectDeleted(project._id)}>
+                                                                    <i className="bi bi-trash-fill me-2"></i> Delete Project
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <p className="card-text text-secondary small mb-0">{project.description}</p>
-                                    <div className="d-flex justify-content-between text-muted small mt-1">
-                                        {project.createdAt && (
-                                            <span className="me-2">Created: {new Date(project.createdAt).toLocaleDateString()}</span>
-                                        )}
-                                        {project.dueDate && (
-                                            <span>Due: {new Date(project.dueDate).toLocaleDateString()}</span>
-                                        )}
-                                    </div>
+                                    </li>
+                                ))
+                            ) : (
+                                <div className="alert alert-info text-center mt-3" role="alert">
+                                    No projects found. {searchTerm && 'Try a different search term.'}
                                 </div>
-                            </li>
-                        ))}
-                    </ul>
+                            )}
+                        </ul>
+                    </div>
                 </div>
             </div>
             

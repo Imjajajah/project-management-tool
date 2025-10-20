@@ -10,11 +10,11 @@ function ProjectPage() {
 
     return (
         <div className="row h-100">
-            <div className="col-md-5 d-flex flex-column h-100">
+            <div className="col-md-5 d-flex flex-column h-100 mb-3">
                 <ProjectList selectedProject={selectedProject} onProjectSelect={handleProjectSelect}/>
             </div>
             
-            <div className="col-md-7 d-flex flex-column h-100">
+            <div className="col-md-7 d-flex flex-column h-100 mb-3">
                 <TaskList selectedProject={selectedProject}/>
             </div>
         </div>
