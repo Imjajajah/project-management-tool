@@ -1,3 +1,5 @@
+// /Users/jarreyes/Documents/PROGRAMS/project-management-tool/client/src/components/TaskCard.jsx
+
 import { Draggable } from '@hello-pangea/dnd';
 
 // Utility function to format the due date
@@ -34,7 +36,8 @@ function TaskCard({ task, index, onDelete }) {
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
-                    className={`kanban-task card mb-2 ${snapshot.isDragging ? 'is-dragging shadow-lg border-primary' : 'shadow-sm'}`}
+                    // Added a hover effect to better indicate drag-ability
+                    className={`kanban-task card mb-2 cursor-grab ${snapshot.isDragging ? 'is-dragging shadow-lg border-primary' : 'shadow-sm'}`}
                 >
                     <div className="card-body d-flex justify-content-between align-items-start p-3">
                         
@@ -45,7 +48,8 @@ function TaskCard({ task, index, onDelete }) {
                             {/* NEW: Due Date Display */}
                             {formattedDueDate && (
                                 <p 
-                                    className={`card-text small mb-0 fw-semibold ${task.completed ? 'text-secondary' : 'text-danger'}`}
+                                    // Added text-nowrap to prevent date from wrapping unexpectedly
+                                    className={`card-text small mb-0 fw-semibold text-nowrap ${task.completed ? 'text-secondary' : 'text-danger'}`}
                                 >
                                     <i className="bi bi-clock-fill me-1"></i> Due: {formattedDueDate}
                                 </p>
@@ -56,7 +60,6 @@ function TaskCard({ task, index, onDelete }) {
                         <button 
                             className="btn btn-sm btn-outline-danger border-0 p-0 flex-shrink-0" 
                             onClick={() => onDelete(task._id)}
-                            // Stop drag interaction when clicking the button
                             onMouseDown={e => e.stopPropagation()}
                             onTouchStart={e => e.stopPropagation()}
                         >

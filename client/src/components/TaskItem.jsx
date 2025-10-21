@@ -19,10 +19,11 @@ const TaskItem = ({ task, onToggleComplete, onDelete, isSelected, onToggleSelect
             return 'Invalid Date';
         }
 
+        // Changed format to be shorter/more appropriate for a task list
         return date.toLocaleDateString('en-US', {
-            year: 'numeric',
             month: 'short',
             day: 'numeric',
+            // Removed year: 'numeric' for brevity, use full date if needed
         });
     };
 
@@ -41,7 +42,11 @@ const TaskItem = ({ task, onToggleComplete, onDelete, isSelected, onToggleSelect
             <div className="d-flex align-items-start justify-content-between text-start">
                 
                 {/* Task Name & Checkbox: Prioritize this area */}
-                <div className="d-flex align-items-center flex-grow-1 me-2 min-w-0">
+                <div 
+                    className="d-flex align-items-center flex-grow-1 me-2 min-w-0"
+                    // ADDED: Added a min-height style here to ensure the row height is consistent
+                    style={{ minHeight: '32px' }} 
+                >
                     <input
                         className="form-check-input me-3 mt-0 flex-shrink-0"
                         type="checkbox"
@@ -60,7 +65,6 @@ const TaskItem = ({ task, onToggleComplete, onDelete, isSelected, onToggleSelect
                         {displayTaskName}
                     </label>
                     
-                    {/* Hidden checkbox for completion state (used by the main click handler) */}
                     <input
                         className="form-check-input me-3 mt-0 d-none"
                         type="checkbox"
@@ -70,12 +74,15 @@ const TaskItem = ({ task, onToggleComplete, onDelete, isSelected, onToggleSelect
                     />
                 </div>
                 
-                {/* Actions: Due Date & Delete Button (flex-shrink-0 to guarantee space) */}
-                <div className="d-flex align-items-center flex-shrink-0 ms-2">
+                <div 
+                    className="d-flex align-items-center flex-shrink-0 ms-2"
+                   
+                    style={{ minHeight: '32px' }} 
+                >
                     
                     {/* Due Date: Hidden on extra-small (xs) screens */}
                     <p className="text-muted small mb-0 me-3 d-none d-sm-block">
-                        {formattedDueDate ? `Due: ${formattedDueDate}` : ''}
+                        {formattedDueDate ? `Due: ${formattedDueDate}` : <>&nbsp;</>}
                     </p>
                     
                     {/* Delete Button: Icon only on small screens */}
