@@ -1,6 +1,21 @@
 import React from 'react';
 
-const TaskItem = ({ task, onToggleComplete, onDelete, isSelected, onToggleSelect }) => {
+const TASK_STATUSES = [
+    { value: 'todo', label: 'To Do', className: 'text-primary' },
+    { value: 'in-progress', label: 'In Progress', className:"text-warning"},
+    { value: 'done', label: 'Done', className:'text-success'},
+];
+
+// Updated Props: Added isBulkSelectMode
+const TaskItem = ({ 
+    task, 
+    onToggleComplete, 
+    onDelete, 
+    isSelected, 
+    onToggleSelect, 
+    onUpdateStatus, 
+    isBulkSelectMode 
+}) => {
     
     // String Limiter Utility Function
     const truncateString = (str, num) => {
@@ -12,92 +27,140 @@ const TaskItem = ({ task, onToggleComplete, onDelete, isSelected, onToggleSelect
 
     const formatDate = (dateString) => {
         if (!dateString) {return ''};
-
         const date = new Date(dateString);
-
         if (isNaN(date)){
             return 'Invalid Date';
         }
-
-        // Changed format to be shorter/more appropriate for a task list
         return date.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
-            // Removed year: 'numeric' for brevity, use full date if needed
         });
     };
 
     const formattedDueDate = formatDate(task.dueDate);
-
-    // Truncate task name for display, allowing 50 characters before adding '...'
     const displayTaskName = truncateString(task.name, 50);
+
+    const currentStatus = TASK_STATUSES.find(s => s.value === task.status) || TASK_STATUSES[0];
+
+    const handleStatusChange = (e) => {
+        e.stopPropagation();
+        const newStatus = e.target.value;
+        if (onUpdateStatus) {
+            onUpdateStatus(task._id, newStatus);
+        }
+    };
+
+    const handleDeleteClick = (e) => {
+        e.stopPropagation();
+        onDelete(task._id);
+    }
+    
+    // COMPLETION TOGGLE HANDLER: Only called by the first checkbox
+    const handleCompletionToggle = (e) => {
+        e.stopPropagation(); 
+        onToggleComplete(task);
+    };
+    
+    // CARD BODY CLICK HANDLER: Only handles bulk selection
+    const handleCardClick = () => {
+        if (isBulkSelectMode) {
+            onToggleSelect(task._id);
+        }
+    };
+    
+    // Determine the class name based on state
+    let cardClasses = `card mb-1 p-1 text-dark border-secondary shadow-sm`;
+    if (task.completed) {
+        cardClasses = `card mb-1 p-1 text-dark border-0 shadow-sm bg-light`;
+    }
+    // HIGHLIGHT: If in bulk mode AND selected
+    if (isSelected && isBulkSelectMode) {
+         cardClasses = `card mb-1 p-1 text-dark border-primary border-3 shadow-lg bg-info-subtle`;
+    }
+
+    // Determine cursor style
+    const cursorStyle = isBulkSelectMode ? 'pointer' : 'default';
 
     return (
         <div
-            className={`card mb-1 p-2 text-dark border-secondary ${task.completed ? 'bg-light border-0 shadow-sm' : 'shadow-sm'}`}
-            // Note: The main onClick now handles both completion and selection
-            onClick={() => onToggleComplete(task)}
-            style={{ cursor: 'pointer' }}>
+            className={cardClasses}
+            // ASSIGN CARD CLICK: Only for selection when in bulk mode
+            onClick={handleCardClick} 
+            style={{ cursor: cursorStyle }} 
+        >
             
-            <div className="d-flex align-items-start justify-content-between text-start">
+            <div className="d-flex align-items-center justify-content-between text-start">
                 
-                {/* Task Name & Checkbox: Prioritize this area */}
                 <div 
                     className="d-flex align-items-center flex-grow-1 me-2 min-w-0"
-                    // ADDED: Added a min-height style here to ensure the row height is consistent
                     style={{ minHeight: '32px' }} 
                 >
+                    
+                    {/* COMPLETION CHECKBOX (Always visible, handles toggleComplete) */}
                     <input
                         className="form-check-input me-3 mt-0 flex-shrink-0"
                         type="checkbox"
-                        checked={isSelected}
-                        onChange={() => onToggleSelect(task._id)}
-                        onClick={(e) => e.stopPropagation()} // Prevents the parent div's onClick from firing
-                        id={`task-select-${task._id}`}
+                        checked={task.completed} 
+                        onChange={handleCompletionToggle} 
+                        // IMPORTANT: Stop propagation so checkbox click doesn't trigger card selection in bulk mode
+                        onClick={(e) => e.stopPropagation()} 
+                        id={`task-complete-${task._id}`}
+                        title="Mark Complete/Incomplete"
                     />
+
                     {/* The task name itself */}
                     <label
-                        htmlFor={`task-complete-${task._id}`}
+                        // FIX: Removed htmlFor to prevent the label/text click from toggling the checkbox.
                         className={`form-check-label text-truncate w-100 ${task.completed ? 'text-decoration-line-through text-secondary' : 'text-dark'}`}
-                        style={{ cursor: 'pointer' }}
-                        title={task.name} // Show full name on hover
+                        // Changed cursor to default when not in bulk mode, to visually confirm it's not clickable for completion.
+                        style={{ cursor: 'default' }} 
+                        title={task.name}
                     >
                         {displayTaskName}
                     </label>
                     
-                    <input
-                        className="form-check-input me-3 mt-0 d-none"
-                        type="checkbox"
-                        checked={task.completed}
-                        readOnly
-                        id={`task-complete-${task._id}`}
-                    />
                 </div>
                 
                 <div 
                     className="d-flex align-items-center flex-shrink-0 ms-2"
-                   
                     style={{ minHeight: '32px' }} 
                 >
                     
-                    {/* Due Date: Hidden on extra-small (xs) screens */}
-                    <p className="text-muted small mb-0 me-3 d-none d-sm-block">
+                    {/* Status Dropdown */}
+                    <select
+                        className={`form-select form-select-sm border-0 fw-bold me-3 bg-light text-dark ${currentStatus.className} text-truncate`}
+                        value={task.status || 'todo'} 
+                        onChange={handleStatusChange}
+                        onClick={(e) => e.stopPropagation()} 
+                        style={{ maxWidth: '120px', cursor: 'pointer' }}
+                        title={`Current Status: ${currentStatus.label}`}
+                    >
+                        {TASK_STATUSES.map(status => (
+                            <option 
+                                key={status.value} 
+                                value={status.value} 
+                            >
+                                {status.label}
+                            </option>
+                        ))}
+                    </select>
+
+                    {/* Due Date */}
+                    <p className="text-muted small mb-0 me-3 d-none d-sm-block text-nowrap">
                         {formattedDueDate ? `Due: ${formattedDueDate}` : <>&nbsp;</>}
                     </p>
                     
-                    {/* Delete Button: Icon only on small screens */}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete(task._id);
-                        }}
-                        className="btn btn-sm btn-outline-danger border-0 flex-shrink-0"
-                        aria-label="Delete Task"
-                        title="Delete Task"
-                    >
-                        <i className="bi bi-trash-fill"></i>
-                        <span className="d-none d-sm-inline ms-1">Delete</span>
-                    </button>
+                    {/* Delete Button (Icon Only - Hidden in Bulk Mode for clarity) */}
+                    {!isBulkSelectMode && (
+                        <button
+                            onClick={handleDeleteClick}
+                            className="btn btn-sm btn-outline-danger border-0 p-1 flex-shrink-0"
+                            aria-label="Delete Task"
+                            title="Delete Task (Single)"
+                        >
+                            <i className="bi bi-trash-fill fs-6"></i>
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
