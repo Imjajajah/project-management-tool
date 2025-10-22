@@ -50,10 +50,8 @@ function TaskList({ selectedProject }) {
     const [newTaskDueDate, setNewTaskDueDate] = useState('');
     const [selectedTasks, setSelectedTasks] = useState([]);
     const [showTip, setShowTip] = useState(false);
-    // NEW STATE: Toggle to show/hide the selection checkboxes
-    const [isBulkSelectMode, setIsBulkSelectMode] = useState(false); 
-
-    // --- (All your logic functions: showSweetAlert, fetchTasks, handleAddTask, etc. remain unchanged) ---
+    
+    // REMOVED: isBulkSelectMode state and handleToggleBulkSelectMode function
 
     const showSweetAlert = (title, text, confirmButtonText, action) => {
         Swal.fire({
@@ -140,34 +138,8 @@ function TaskList({ selectedProject }) {
             Swal.fire('Error!', 'An unexpected error occurred. Please try again.', 'error');
         }
     };
-
-    const handleToggleComplete = async (task) => {
-        const updatedTask = {...task, completed: !task.completed };
-        
-        // Synchronize status with completion state for the API call
-        if (!updatedTask.completed) {
-            updatedTask.status = 'todo';
-        } else {
-            updatedTask.status = 'done';
-        }
-
-        try {
-            const serverUrl = import.meta.env.VITE_SERVER_URL;
-            const token = getToken();
-            const response = await fetch(`${serverUrl}/api/tasks/${task._id}`, {
-                method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'x-auth-token': token
-                },
-                body: JSON.stringify(updatedTask),
-            });
-            const result = await response.json();
-            setTasks(prevTasks => prevTasks.map(t => (t._id === result._id ? result : t)));
-        } catch (error) {
-            console.error("Error updating task:", error);
-        }
-    };
+    
+    // REMOVED: handleToggleComplete is removed as the status dropdown is now the sole controller of completion state.
 
     const handleToggleSelect = (taskId) => {
         setSelectedTasks(prevSelectedTasks => {
@@ -178,16 +150,6 @@ function TaskList({ selectedProject }) {
             }
         });
     };
-
-    // NEW FUNCTION: Toggle the bulk select mode
-    const handleToggleBulkSelectMode = () => {
-        // When turning off, clear all selections
-        if (isBulkSelectMode) {
-            setSelectedTasks([]);
-        }
-        setIsBulkSelectMode(prevMode => !prevMode);
-    };
-
 
     const handleDeleteTask = (taskId) => {
         const originalTasks = tasks;
@@ -279,7 +241,6 @@ function TaskList({ selectedProject }) {
                         },
                     });
                     setSelectedTasks([]);
-                    setIsBulkSelectMode(false); // Exit mode after deletion
                 } catch (error) {
                     console.error("Error deleting selected tasks:", error);
                     setTasks(originalTasks); // Revert the UI state if the API call fails
@@ -294,7 +255,7 @@ function TaskList({ selectedProject }) {
         const originalTask = tasks.find(t => t._id === taskId);
         if (!originalTask) return;
 
-        // OPTIMISTIC UI UPDATE
+        // OPTIMISTIC UI UPDATE: CRITICAL - completion status is now tied to 'done' status
         const updatedTask = { 
             ...originalTask, 
             status: newStatus,
@@ -314,7 +275,7 @@ function TaskList({ selectedProject }) {
                     'Content-Type': 'application/json',
                     'x-auth-token': token
                 },
-                body: JSON.stringify({ newStatus }), // newStatus is what the backend expects
+                body: JSON.stringify({ newStatus, completed: newStatus === 'done' }), // Ensure 'completed' is sent
             });
             
             if (!response.ok) {
@@ -364,21 +325,10 @@ function TaskList({ selectedProject }) {
                                 </div>
                             </div>
 
-                            {/* CONDITIONAL ACTION BUTTONS */}
+                            {/* CONDITIONAL ACTION BUTTONS - Simplified: Only Bulk Delete remains */}
                             <div className="d-flex flex-shrink-0">
-                                {/* Button to ENTER/EXIT Bulk Select Mode */}
-                                {tasks.length > 0 && (
-                                    <button 
-                                        onClick={handleToggleBulkSelectMode} 
-                                        className={`btn btn-sm me-2 ${isBulkSelectMode ? 'btn-outline-secondary' : 'btn-outline-primary'}`}
-                                    >
-                                        <i className={`bi me-1 ${isBulkSelectMode ? 'bi-x-lg' : 'bi-check-all'}`}></i>
-                                        {isBulkSelectMode ? 'Exit Selection Mode' : 'Select Many'}
-                                    </button>
-                                )}
-                                
-                                {/* Delete Selected Button (Only visible if in mode AND tasks are selected) */}
-                                {isBulkSelectMode && selectedTasks.length > 0 && (
+                                {/* Delete Selected Button (Visible if any task is selected) */}
+                                {selectedTasks.length > 0 && (
                                     <button onClick={handleDeleteSelected} className="btn btn-danger btn-sm flex-shrink-0">
                                         <i className="bi bi-trash-fill me-1"></i> Delete ({selectedTasks.length})
                                     </button>
@@ -428,9 +378,7 @@ function TaskList({ selectedProject }) {
                                         key={task._id}
                                         task={task}
                                         isSelected={selectedTasks.includes(task._id)}
-                                        isBulkSelectMode={isBulkSelectMode} // <-- NEW PROP
                                         onToggleSelect={handleToggleSelect}
-                                        onToggleComplete={handleToggleComplete}
                                         onDelete={handleDeleteTask}
                                         onUpdateStatus={handleUpdateStatus} 
                                     />
