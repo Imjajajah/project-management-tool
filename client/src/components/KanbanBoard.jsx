@@ -196,8 +196,8 @@ function KanbanBoard({ selectedProject }) {
                                     const styles = columnStyles[columnId] || {};
                                     return (
                                         <div key={columnId} className="col-md-4 mb-3 d-flex flex-column">
-                                            <div className="kanban-column p-3 rounded-lg shadow-sm flex-fill border border-2" style={{backgroundColor: styles.backgroundColor, borderColor: styles.borderColor}}>
-                                                <h4 className={`column-title fw-bold text-${columnId === 'todo' ? 'primary' : columnId === 'in-progress' ? 'warning' : 'success'} border-bottom pb-2 mb-3`}>
+                                            <div className="kanban-column p-3 rounded-lg shadow-sm flex-fill border border-2">
+                                                <h4 className={`column-title fw-bold border-bottom pb-2 mb-3`}>
                                                     {column.title} ({column.tasks.length})
                                                 </h4>
                                                 <Droppable droppableId={columnId}>
@@ -239,10 +239,4 @@ function KanbanBoard({ selectedProject }) {
 }
 
 export default KanbanBoard;
-
-
-
-
-
-
 
