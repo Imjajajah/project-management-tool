@@ -57,7 +57,7 @@ function KanbanPage() {
     }, [projectId, navigate]);
 
     return (
-        <div className="h-100 p-3">
+        <div className="h-100 p-0">
             {project ? (
                 <KanbanBoard selectedProject={project} />
             ) : (

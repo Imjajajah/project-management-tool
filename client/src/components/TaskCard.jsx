@@ -16,10 +16,11 @@ function TaskCard({ task, index, onDelete }) {
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
                     // Added a hover effect to better indicate drag-ability
-                    className={`kanban-task card mb-2 cursor-grab ${snapshot.isDragging ? 'is-dragging shadow-lg border-primary' : 'shadow-sm'}`}
+                    className={`kanban-task card mb-1 cursor-grab ${snapshot.isDragging ? 'is-dragging shadow-lg border-primary' : 'shadow-sm'}`}
+                  
                 >
-                    {/* Reduced card-body padding from p-3 to p-2 for a more compact Kanban card */}
-                    <div className="card-body d-flex justify-content-between align-items-start p-2">
+           
+                    <div className="card-body d-flex justify-content-between align-items-start p-1" >
                         
                         {/* Task Name and Due Date */}
                         <div className="flex-grow-1 min-w-0 me-3 text-start">

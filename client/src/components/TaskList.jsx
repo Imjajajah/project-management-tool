@@ -330,7 +330,7 @@ function TaskList({ selectedProject }) {
                             <div className="d-flex align-items-center mb-2 mb-sm-0 me-3 flex-grow-1 min-w-0">
                                 <h3 className="mb-0 fs-6 text-truncate text-secondary fw-normal me-2" title={selectedProject.name}>
                                     Project: <strong className="text-dark fw-bold">{selectedProject.name}</strong>
-                                    {getProjectAccronym()}
+                                    {/* {getProjectAccronym()} */}
                                 </h3>
                                 
                                 <div className="d-flex align-items-center">
