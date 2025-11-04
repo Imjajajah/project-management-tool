@@ -292,6 +292,21 @@ function TaskList({ selectedProject }) {
             Swal.fire('Error', 'An unexpected error occurred while saving status.', 'error');
         }
     };
+    
+    const getProjectAccronym = () => {
+        if (!selectedProject || !selectedProject.name) return '';
+
+        const selectedProjectName = selectedProject.name.trim();
+
+        const acronym = selectedProjectName
+            .split(' ')
+            .map(word => word.charAt(0))
+            .filter(char => char)
+            .join('')
+            .toUpperCase();
+        
+        return acronym;
+    };
 
 
     useEffect(() => {
@@ -315,6 +330,7 @@ function TaskList({ selectedProject }) {
                             <div className="d-flex align-items-center mb-2 mb-sm-0 me-3 flex-grow-1 min-w-0">
                                 <h3 className="mb-0 fs-6 text-truncate text-secondary fw-normal me-2" title={selectedProject.name}>
                                     Project: <strong className="text-dark fw-bold">{selectedProject.name}</strong>
+                                    {/* {getProjectAccronym()} */}
                                 </h3>
                                 
                                 <div className="d-flex align-items-center">

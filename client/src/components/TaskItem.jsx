@@ -1,4 +1,5 @@
 import React from 'react';
+import DueDateBadge from './DueDateBadge'; // New: Import the reusable date component
 
 const TASK_STATUSES = [
     { value: 'todo', label: 'To Do', className: 'text-primary', bgClass: 'bg-primary' },
@@ -23,53 +24,10 @@ const TaskItem = ({
         return str.slice(0, num) + '...';
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) {return ''};
-        const date = new Date(dateString);
-        if (isNaN(date)){
-            return 'Invalid Date';
-        }
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-    
-    // Function to determine due date styling based on proximity, returns only the color string
-    const getDueDateColor = (dateString) => {
-        if (!dateString) return 'muted'; 
-        
-        const dueDate = new Date(dateString);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Normalize today to midnight for comparison
+    // Removed: formatDate, getDueDateColor, formattedDueDate, dueDateColor, dueDateTextClasses, and dueDateFormattingClasses.
+    // This logic is now handled entirely within DueDateBadge.jsx
 
-        const diffTime = dueDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays < 0) {
-            // Overdue (Red)
-            return 'danger';
-        } else if (diffDays <= 3) {
-            // Approaching (Yellow/Warning)
-            return 'warning';
-        } else {
-            // Future (Success/Green)
-            return 'success'; 
-        }
-    };
-
-
-    const formattedDueDate = formatDate(task.dueDate);
     const displayTaskName = truncateString(task.name, 50);
-    
-    // Determine the color string (danger, warning, success, or muted)
-    const dueDateColor = getDueDateColor(task.dueDate);
-    
-    // Classes for text color and font weight (fw-bold for urgent status)
-    const dueDateTextClasses = `text-${dueDateColor} ${['danger', 'warning'].includes(dueDateColor) ? 'fw-bold' : ''}`;
-
-    // Classes for border-only look (removed rounded-pill)
-    const dueDateFormattingClasses = `border border-1 border-${dueDateColor}`;
     
     const currentStatus = TASK_STATUSES.find(s => s.value === task.status) || TASK_STATUSES[0];
 
@@ -105,9 +63,9 @@ const TaskItem = ({
     // 2. Otherwise, if completed (Status: Done), apply standard completed styling
     else if (task.completed) {
         // FIX: Ensure border is visible and use a subtle background for completion status
-        cardClasses += ` border-secondary bg-light`; 
+        cardClasses += ` border-secondary bg-white`; 
     } else {
-        // Default style: secondary border, white background
+        
         cardClasses += ` border-secondary bg-white`;
     }
     
@@ -154,13 +112,20 @@ const TaskItem = ({
                 {/* CONTROL GROUP (pushed to the right using ms-auto) */}
                 <div className="d-flex align-items-center flex-shrink-0 ms-auto">
                     
-
+                    {/* 2. Due Date (Now using the reusable DueDateBadge component) */}
+                    {/* Width is set here to maintain layout consistency with the original design */}
+                    <div className="text-muted d-none d-sm-flex align-items-center justify-content-end me-3 text-nowrap" style={{ width: '75px', fontSize: '0.7rem' }}>
+                        <DueDateBadge 
+                            dueDate={task.dueDate} 
+                            isCompleted={task.completed} 
+                        />
+                    </div>
 
                     {/* 3. Status Dropdown (Increased Width to 110px to accommodate "In Progress" fully) */}
-                    <div className="flex-shrink-0 me-0" style={{ width: '110px', minWidth: '110px' }}>
+                    <div className="flex-shrink-0 me-1" style={{ width: '110px', minWidth: '110px' }}>
                         <select
-                            // Status dropdown still uses bgClass for background and text-white for contrast
-                            className={`form-select form-select-sm border-0 fw-bold text-white ${currentStatus.bgClass} text-truncate`}
+                            // Added 'rounded-1' to match the due date indicator
+                            className={`form-select form-select-sm border-0 fw-bold text-white ${currentStatus.bgClass} text-truncate rounded-1`}
                             value={task.status || 'todo'} 
                             onChange={handleStatusChange}
                             onClick={(e) => e.stopPropagation()} 
@@ -179,20 +144,6 @@ const TaskItem = ({
                                 </option>
                             ))}
                         </select>
-                    </div>
-          
-                    <div className="text-muted d-none d-sm-flex align-items-center justify-content-end me-1 text-nowrap" style={{ width: '75px', fontSize: '0.7rem' }}>
-                        {formattedDueDate && (
-                            <p 
-                                // Applied square border styles
-                                className={`mb-0 d-flex align-items-center px-1 ${dueDateTextClasses} ${dueDateFormattingClasses}`}
-                                // Reduced padding on the p tag to keep it compact
-                                style={{ padding: '2px 4px' }}
-                            >
-                                <i className="bi bi-clock me-1"></i> 
-                                {formattedDueDate}
-                            </p>
-                        )}
                     </div>
 
                     {/* 4. Delete Button (Fixed Small Width) */}

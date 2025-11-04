@@ -70,3 +70,35 @@
 .task-list-container.dragging-over {
   background-color: #ced4da; /* Highlight color when dragging over */
 }
+
+.kanban-task{
+  min-height: 80px;
+}
+
+.kanban-board-container {
+  width: 100%;
+  padding: 1rem 2rem;
+}
+
+.kanban-columns {
+  width: 100%;
+  display: flex;
+  gap: 1rem;
+}
+
+.kanban-column {
+  flex: 1 1 0;           /* Columns stretch evenly */
+  min-width: 300px;      /* Still responsive */
+  max-width: 33%;        /* Prevents columns from becoming too wide */
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 992px) {
+  .kanban-columns {
+    flex-wrap: wrap;
+  }
+  .kanban-column {
+    max-width: 100%;
+  }
+}
