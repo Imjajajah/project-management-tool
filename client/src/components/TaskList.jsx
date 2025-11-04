@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import TaskItem from './TaskItem';
+import { useEffect, useState, useCallback } from 'react';
+import TaskItem, { TASK_STATUSES } from './TaskItem';
 import Swal from 'sweetalert2';
 import { getToken } from '../utils/api';
+import TaskDetailDrawer from './TaskDetailDrawer'; 
 
 // --- CUSTOM STYLES FIX ---
 const customTasklistStyles = `
@@ -22,6 +23,11 @@ const customTasklistStyles = `
         flex-shrink: 0;
         padding-left: 0.75rem; 
         padding-right: 0.75rem;
+    }
+
+    /* NEW: Hover shadow for TaskItem */
+    .hover-shadow-lg:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175) !important;
     }
 
     @media (max-width: 575.98px) {
@@ -48,26 +54,14 @@ function TaskList({ selectedProject }) {
     const [tasks, setTasks] = useState([]);
     const [newTaskName, setNewTaskName] = useState('');
     const [newTaskDueDate, setNewTaskDueDate] = useState('');
+    
     const [selectedTasks, setSelectedTasks] = useState([]);
     const [showTip, setShowTip] = useState(false);
     
-    // REMOVED: isBulkSelectMode state and handleToggleBulkSelectMode function
+    // NEW STATE: For Task Detail Drawer
+    const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+    const [currentDetailedTask, setCurrentDetailedTask] = useState(null);
 
-    const showSweetAlert = (title, text, confirmButtonText, action) => {
-        Swal.fire({
-            title: title,
-            text: text,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: confirmButtonText,
-        }).then((result) => {
-            if (result.isConfirmed) {
-                action();
-            }
-        });
-    }
 
     const fetchTasks = async (projectId) => {
         try {
@@ -139,7 +133,83 @@ function TaskList({ selectedProject }) {
         }
     };
     
-    // REMOVED: handleToggleComplete is removed as the status dropdown is now the sole controller of completion state.
+    // NEW: Function to open the detail drawer
+    const handleViewTaskDetails = (task) => {
+        setCurrentDetailedTask(task);
+        setIsDetailDrawerOpen(true);
+    };
+
+    // NEW: Function to close the detail drawer
+    const handleCloseDetailDrawer = () => {
+        setIsDetailDrawerOpen(false);
+        // Clear task after transition is likely complete (300ms transition time)
+        setTimeout(() => setCurrentDetailedTask(null), 300);
+    };
+    
+    /**
+     * NEW: Unified function to handle saving all fields from the Task Detail Drawer.
+     * @param {Object} updatedTaskData - Contains _id, name, dueDate, description, status, completed.
+     */
+    const handleSaveTaskDetails = useCallback(async (updatedTaskData) => {
+        const taskId = updatedTaskData._id;
+        const originalTask = tasks.find(t => t._id === taskId);
+        if (!originalTask) return;
+
+        // 1. Optimistic UI Update (List)
+        setTasks(prevTasks => 
+            prevTasks.map(t => 
+                t._id === taskId ? { ...t, ...updatedTaskData } : t
+            )
+        );
+        // 2. Optimistic UI Update (Drawer/Current Task)
+        setCurrentDetailedTask(updatedTaskData);
+        
+        // Close the drawer immediately for a better user experience
+        handleCloseDetailDrawer(); 
+
+        try {
+            const serverUrl = import.meta.env.VITE_SERVER_URL;
+            const token = getToken();
+            
+            // This calls the PUT /api/tasks/:taskId endpoint which now handles all fields
+            const response = await fetch(`${serverUrl}/api/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-auth-token': token
+                },
+                body: JSON.stringify(updatedTaskData),
+            });
+            
+            if (!response.ok) {
+                // API failed: Revert the UI state
+                setTasks(prevTasks => prevTasks.map(t => (t._id === taskId ? originalTask : t)));
+                setCurrentDetailedTask(originalTask); 
+                const errorData = await response.json();
+                Swal.fire('Error', errorData.message || 'Failed to save task details.', 'error');
+                return;
+            }
+
+            // Success message
+            Swal.fire({
+                title: 'Saved!',
+                text: 'Task details updated successfully.',
+                icon: 'success',
+                toast: true,
+                position: 'bottom-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+
+        } catch (error) {
+            console.error("Error saving task details:", error);
+            // Network failure: Revert the UI state
+            setTasks(prevTasks => prevTasks.map(t => (t._id === taskId ? originalTask : t)));
+            setCurrentDetailedTask(originalTask);
+            Swal.fire('Error', 'A network error occurred while saving details.', 'error');
+        }
+    }, [tasks]); // Dependency on 'tasks' to get the originalTask correctly
+
 
     const handleToggleSelect = (taskId) => {
         setSelectedTasks(prevSelectedTasks => {
@@ -156,6 +226,10 @@ function TaskList({ selectedProject }) {
         
         // Optimistically update the UI
         setTasks(prevTasks => prevTasks.filter(t => t._id !== taskId));
+        // Close drawer if the deleted task was open
+        if (currentDetailedTask && currentDetailedTask._id === taskId) {
+            handleCloseDetailDrawer();
+        }
         
         const serverUrl = import.meta.env.VITE_SERVER_URL;
         
@@ -209,6 +283,10 @@ function TaskList({ selectedProject }) {
             const originalTasks = tasks;
             // Optimistically update the UI
             setTasks(prevTasks => prevTasks.filter(t => !selectedTasks.includes(t._id)));
+            // Close drawer if the deleted task was in the selection
+            if (currentDetailedTask && selectedTasks.includes(currentDetailedTask._id)) {
+                handleCloseDetailDrawer();
+            }
             
             const serverUrl = import.meta.env.VITE_SERVER_URL;
 
@@ -263,6 +341,10 @@ function TaskList({ selectedProject }) {
         }; 
 
         setTasks(prevTasks => prevTasks.map(t => (t._id === taskId ? updatedTask : t)));
+        // Update the detailed task if it's currently open
+        if (currentDetailedTask && currentDetailedTask._id === taskId) {
+            setCurrentDetailedTask(updatedTask);
+        }
 
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
@@ -293,21 +375,6 @@ function TaskList({ selectedProject }) {
         }
     };
     
-    const getProjectAccronym = () => {
-        if (!selectedProject || !selectedProject.name) return '';
-
-        const selectedProjectName = selectedProject.name.trim();
-
-        const acronym = selectedProjectName
-            .split(' ')
-            .map(word => word.charAt(0))
-            .filter(char => char)
-            .join('')
-            .toUpperCase();
-        
-        return acronym;
-    };
-
 
     useEffect(() => {
         if (selectedProject) {
@@ -316,6 +383,13 @@ function TaskList({ selectedProject }) {
             setTasks([]);
         }
     }, [selectedProject]);
+
+    // Added useEffect to close drawer if the task it's viewing is deleted from the list
+    useEffect(() => {
+        if (currentDetailedTask && !tasks.find(t => t._id === currentDetailedTask._id)) {
+            handleCloseDetailDrawer();
+        }
+    }, [tasks, currentDetailedTask]);
 
 
     return (
@@ -330,18 +404,17 @@ function TaskList({ selectedProject }) {
                             <div className="d-flex align-items-center mb-2 mb-sm-0 me-3 flex-grow-1 min-w-0">
                                 <h3 className="mb-0 fs-6 text-truncate text-secondary fw-normal me-2" title={selectedProject.name}>
                                     Project: <strong className="text-dark fw-bold">{selectedProject.name}</strong>
-                                    {/* {getProjectAccronym()} */}
                                 </h3>
                                 
                                 <div className="d-flex align-items-center">
-                                    {showTip && <p className="text-muted small mb-0 me-2 d-none d-md-block">Click the task name to view details.</p>}
+                                    {showTip && <p className="text-muted small mb-0 me-2 d-none d-md-block">Click any task to view details in the drawer!</p>}
                                     <button onClick={() => setShowTip(!showTip)} className="btn btn-link text-muted p-0" aria-label="Show tip">
                                         <i className="bi bi-info-circle"></i>
                                     </button>
                                 </div>
                             </div>
 
-                            {/* CONDITIONAL ACTION BUTTONS - Simplified: Only Bulk Delete remains */}
+                            {/* CONDITIONAL ACTION BUTTONS */}
                             <div className="d-flex flex-shrink-0">
                                 {/* Delete Selected Button (Visible if any task is selected) */}
                                 {selectedTasks.length > 0 && (
@@ -396,7 +469,9 @@ function TaskList({ selectedProject }) {
                                         isSelected={selectedTasks.includes(task._id)}
                                         onToggleSelect={handleToggleSelect}
                                         onDelete={handleDeleteTask}
-                                        onUpdateStatus={handleUpdateStatus} 
+                                        onUpdateStatus={handleUpdateStatus}
+                                        // NEW PROP: Pass the detail view handler
+                                        onViewTaskDetails={handleViewTaskDetails}
                                     />
                                 ))
                             ) : (
@@ -421,6 +496,15 @@ function TaskList({ selectedProject }) {
                     </div>
                 </div>
             )}
+
+            {/* NEW: Render the Task Detail Drawer, floating above all other content */}
+            <TaskDetailDrawer
+                task={currentDetailedTask}
+                isOpen={isDetailDrawerOpen}
+                onClose={handleCloseDetailDrawer}
+                // FIXED: Pass the correct, unified save handler
+                onSaveTask={handleSaveTaskDetails}
+            />
         </>
     );
 }
