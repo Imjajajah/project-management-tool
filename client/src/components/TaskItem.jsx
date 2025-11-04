@@ -1,7 +1,7 @@
 import React from 'react';
 import DueDateBadge from './DueDateBadge'; // New: Import the reusable date component
 
-const TASK_STATUSES = [
+export const TASK_STATUSES = [
     { value: 'todo', label: 'To Do', className: 'text-primary', bgClass: 'bg-primary' },
     { value: 'in-progress', label: 'In Progress', className:"text-warning", bgClass: 'bg-warning'},
     { value: 'done', label: 'Done', className:'text-success', bgClass: 'bg-success'},
@@ -13,7 +13,9 @@ const TaskItem = ({
     onDelete, 
     isSelected, 
     onToggleSelect, 
-    onUpdateStatus
+    onUpdateStatus,
+    // NEW: Add handler for viewing task details
+    onViewTaskDetails 
 }) => {
     
     // String Limiter Utility Function
@@ -23,9 +25,6 @@ const TaskItem = ({
         }
         return str.slice(0, num) + '...';
     };
-
-    // Removed: formatDate, getDueDateColor, formattedDueDate, dueDateColor, dueDateTextClasses, and dueDateFormattingClasses.
-    // This logic is now handled entirely within DueDateBadge.jsx
 
     const displayTaskName = truncateString(task.name, 50);
     
@@ -46,14 +45,21 @@ const TaskItem = ({
     
     // Checkbox now handles selection (onToggleSelect)
     const handleSelectionToggle = (e) => {
-        // e.stopPropagation() is already handled by the onClick on the checkbox input,
-        // but it's good practice to ensure.
+        // Prevent card click when checking the box
         e.stopPropagation(); 
         onToggleSelect(task._id);
     };
+
+    // NEW: Card click handler to open the detail view
+    const handleCardClick = () => {
+        if (onViewTaskDetails) {
+            onViewTaskDetails(task);
+        }
+    }
     
     // Determine the class name based on state
-    let cardClasses = `card mb-1 p-1 text-dark shadow-sm`;
+    // Added 'hover-shadow-lg' for visual feedback on hover (CSS defined in TaskList.jsx)
+    let cardClasses = `card mb-1 p-1 text-dark shadow-sm hover-shadow-lg`; 
 
     // 1. APPLY HIGHLIGHT IF SELECTED (via Checkbox)
     if (isSelected) {
@@ -65,17 +71,17 @@ const TaskItem = ({
         // FIX: Ensure border is visible and use a subtle background for completion status
         cardClasses += ` border-secondary bg-white`; 
     } else {
-        
         cardClasses += ` border-secondary bg-white`;
     }
     
-    // The cursor is always default since the card body itself has no selection or action handler
-    const cursorStyle = 'default';
+    // Set cursor to pointer to indicate clickability
+    const cursorStyle = 'pointer';
 
     return (
         <div
             className={cardClasses}
-            // CRITICAL: Removed onClick={handleCardClick} to reserve card click for future sidebar/detail view
+            // ADDED: The click handler for the entire task card
+            onClick={handleCardClick}
             style={{ cursor: cursorStyle }} 
         >
             
@@ -91,7 +97,7 @@ const TaskItem = ({
                         type="checkbox"
                         checked={isSelected} // Checkbox reflects selection state
                         onChange={handleSelectionToggle} // Toggles selection
-                        // This stops the input click from propagating to the parent div
+                        // This stops the input click from propagating to the card click handler
                         onClick={(e) => e.stopPropagation()} 
                         id={`task-select-${task._id}`}
                         title="Select Task for Bulk Action"
@@ -99,10 +105,9 @@ const TaskItem = ({
                     
                     {/* The task name itself - Line-through based on task.completed (which syncs to status) */}
                     <label
-                        // FIX: Removed htmlFor to decouple the label click from the checkbox input.
+                        // Allow the label to inherit the card's pointer cursor
                         className={`form-check-label text-truncate w-100 ${task.completed ? 'text-decoration-line-through text-secondary' : 'text-dark'}`}
-                        // FIX: Reset cursor to default, since clicking this text should do nothing for selection.
-                        style={{ cursor: 'default' }} 
+                        style={{ cursor: 'pointer' }} 
                         title={task.name}
                     >
                         {displayTaskName}
@@ -128,6 +133,7 @@ const TaskItem = ({
                             className={`form-select form-select-sm border-0 fw-bold text-white ${currentStatus.bgClass} text-truncate rounded-1`}
                             value={task.status || 'todo'} 
                             onChange={handleStatusChange}
+                            // Stop propagation so dropdown doesn't trigger card click
                             onClick={(e) => e.stopPropagation()} 
                             // Custom style to keep it small in height
                             style={{ cursor: 'pointer', height: '24px', padding: '0 0.4rem', lineHeight: '1' }}
@@ -150,6 +156,9 @@ const TaskItem = ({
                     <div className="flex-shrink-0" style={{ width: '40px', maxWidth: '40px' }}>
                         <button
                             onClick={handleDeleteClick}
+                            // Stop propagation so delete button doesn't trigger card click
+                            onMouseDown={(e) => e.stopPropagation()} 
+                            onTouchStart={(e) => e.stopPropagation()} 
                             className="btn btn-sm btn-outline-danger border-0 p-1 w-100"
                             aria-label="Delete Task"
                             title="Delete Task"

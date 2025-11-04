@@ -1,5 +1,3 @@
-///Users/jarreyes/Documents/PROGRAMS/project-management-tool/server/src/controllers/tasksController.js
-
 import Task from '../models/TaskModel.js';
 import Project from '../../projects/models/ProjectModel.js';
 
@@ -22,7 +20,7 @@ export const getTasksByProjectId = async (req, res) => {
 
 // POST a new task
 export const createTask = async (req, res) => {
-    const { name, dueDate } = req.body;
+    const { name, dueDate, description } = req.body; // ADDED: description
     const { projectId } = req.params;
 
     // Check if task name is provided on the server-side as well
@@ -65,6 +63,7 @@ export const createTask = async (req, res) => {
             name,
             project: projectId,
             dueDate,
+            description, // ADDED: description
             user: req.user.id
         });
 
@@ -76,7 +75,7 @@ export const createTask = async (req, res) => {
     }
 };
 
-// PUT/PATCH to update a task
+// PUT/PATCH to update a task (Used for name, completed, dueDate, description, and now status)
 export const updateTask = async (req, res) => {
     try {
         const task = await Task.findOne({ _id: req.params.taskId, user: req.user.id });
@@ -91,27 +90,44 @@ export const updateTask = async (req, res) => {
             return res.status(404).json({ message: 'Associated project not found.' });
         }
 
-        const { name, completed, dueDate } = req.body;
+        // DESTRUCTURING UPDATED: Now includes 'status' from the client request
+        const { name, completed, dueDate, description, status } = req.body; 
         
         // **NEW VALIDATION LOGIC FOR UPDATES**
-        if (dueDate !== undefined && dueDate !== null) {
+        // 1. Validate due date if it's explicitly provided and not null/empty
+        if (dueDate !== undefined && dueDate !== null && dueDate !== '') {
             const taskDueDate = new Date(dueDate);
             const projectDueDate = project.dueDate ? new Date(project.dueDate) : null;
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+
+            // Check if date is valid
+            if (isNaN(taskDueDate)) {
+                 return res.status(400).json({ message: 'Invalid due date format.' });
+            }
+
+            // Check if date is in the past
             if (taskDueDate < today) {
                 return res.status(400).json({ message: 'Task due date cannot be in the past.' });
             }
 
+            // Check against project deadline
             if (projectDueDate && taskDueDate > projectDueDate) {
                 return res.status(400).json({ message: 'Task due date cannot be after the project deadline.' });
             }
         }
-
+        
+        // 2. Apply updates
         if (name !== undefined) task.name = name;
+        if (description !== undefined) task.description = description; 
         if (completed !== undefined) task.completed = completed;
-        if (dueDate !== undefined) task.dueDate = dueDate;
+        if (status !== undefined) task.status = status; // FIXED: Saving the status from the detail drawer
+
+        // Handle due date: set it to null if the client sends null or an empty string, otherwise set the date.
+        if (dueDate !== undefined) {
+             task.dueDate = (dueDate === null || dueDate === "") ? null : dueDate;
+        }
 
         const updatedTask = await task.save();
         res.json(updatedTask);
@@ -169,4 +185,4 @@ export const updateTaskStatus = async (req, res) => {
     } catch (err) {
         res.status(400).json({ message: err.message})
     }
-}; 
+};
