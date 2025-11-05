@@ -167,12 +167,12 @@ function KanbanBoard({ selectedProject }) {
     return (
         <>
             {selectedProject ? (
-                <div className="card bg-white text-dark shadow-sm border-0 rounded-2">
-
-                    <div className="card-body p-0">
-                        <div className="kanban-board-container">
+                <div className="text-dark">
+                    <div className="p-0">
+                        <div className="kanban-board-container kanban-height">
                             <DragDropContext onDragEnd={onDragEnd}>
-                                <div className="kanban-columns d-flex flex-nowrap overflow-auto gap-3 pb-3 text-start">
+                                {/* Change d-flex to d-md-flex and add custom mobile class (kanban-columns-mobile) */}
+                                <div className="kanban-columns d-md-flex flex-nowrap overflow-auto gap-3 pb-3 text-start kanban-columns-mobile">
                                     {Object.entries(columns).map(([columnId, column]) => {
                                         const styles = columnStyles[columnId] || {};
                                         return (
@@ -183,7 +183,7 @@ function KanbanBoard({ selectedProject }) {
                                                     backgroundColor: styles.backgroundColor,
                                                     borderColor: styles.borderColor,
                                                     minWidth: '300px',
-                                                    maxHeight: '75vh',
+                                                    minHeight: '75vh',
                                                     overflowY: 'auto',
                                                 }}
                                             >

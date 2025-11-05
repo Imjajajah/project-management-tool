@@ -57,16 +57,16 @@ function KanbanPage() {
     }, [projectId, navigate]);
 
     return (
-        <div className="h-100 p-0">
+        <div className="h-100 g-0 border-0 mt-3">
             {project ? (
                 <KanbanBoard selectedProject={project} />
             ) : (
-                <div className="card bg-white text-dark shadow-lg border-0 h-100">
+                <div className="card text-dark shadow-lg border-0 h-100 bg-transparent">
                     <div className="card-body d-flex flex-column justify-content-center align-items-center">
                         <div className="spinner-border text-primary" role="status">
                             <span className="visually-hidden">Loading...</span>
                         </div>
-                        <p className="mt-3 text-secondary">Loading Kanban board...</p>
+                        <p className="mt-2 text-secondary">Loading Kanban board...</p>
                     </div>
                 </div>
             )}
