@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import TaskCard from './TaskCard';
 import Swal from 'sweetalert2';
 import { getToken } from '../utils/api';
+import TaskDetailDrawer from './TaskDetailDrawer'; // ✅ Drawer import
 
 const columnStyles = {
     'todo': {
-        backgroundColor: '#f8f9fa', 
+        backgroundColor: '#f8f9fa',
         borderColor: '#0d6efd',
         titleColor: '#6c757d',
     },
@@ -22,7 +23,6 @@ const columnStyles = {
     },
 };
 
-
 function KanbanBoard({ selectedProject }) {
     const [columns, setColumns] = useState({
         'todo': { title: 'To Do', tasks: [] },
@@ -30,6 +30,93 @@ function KanbanBoard({ selectedProject }) {
         'done': { title: 'Done', tasks: [] },
     });
 
+    // ✅ Drawer States
+    const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+    const [currentDetailedTask, setCurrentDetailedTask] = useState(null);
+
+    // ✅ Open drawer
+    const handleViewTaskDetails = (task) => {
+        setCurrentDetailedTask(task);
+        setIsDetailDrawerOpen(true);
+    };
+
+    // ✅ Close drawer
+    const handleCloseDetailDrawer = () => {
+        setIsDetailDrawerOpen(false);
+        setTimeout(() => setCurrentDetailedTask(null), 300);
+    };
+
+    // ✅ Save Task Details
+
+    const handleSaveTaskDetails = useCallback(async (updatedTaskData) => {
+        const taskId = updatedTaskData._id;
+
+        // Update UI first (optimistic update)
+        setColumns((prevColumns) => {
+            const newColumns = { ...prevColumns };
+
+            // Find the old column where the task currently exists
+            let oldColumnKey = null;
+            for (const colKey in newColumns) {
+                if (newColumns[colKey].tasks.some((task) => task._id === taskId)) {
+                    oldColumnKey = colKey;
+                    break;
+                }
+            }
+
+            if (oldColumnKey) {
+                // Remove from old column
+                newColumns[oldColumnKey].tasks = newColumns[oldColumnKey].tasks.filter(
+                    (task) => task._id !== taskId
+                );
+            }
+
+            // Add to the correct (possibly new) column
+            const newStatus = updatedTaskData.status || 'todo';
+            newColumns[newStatus].tasks = [
+                ...newColumns[newStatus].tasks,
+                { ...updatedTaskData },
+            ];
+
+            return newColumns;
+        });
+
+        setCurrentDetailedTask(updatedTaskData);
+        handleCloseDetailDrawer();
+
+        try {
+            const serverUrl = import.meta.env.VITE_SERVER_URL;
+            const token = getToken();
+            const response = await fetch(`${serverUrl}/api/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-auth-token': token,
+                },
+                body: JSON.stringify(updatedTaskData),
+            });
+
+            if (!response.ok) {
+                Swal.fire('Error', 'Failed to update task.', 'error');
+            } else {
+                Swal.fire({
+                    title: 'Saved!',
+                    text: 'Task details updated successfully.',
+                    icon: 'success',
+                    toast: true,
+                    position: 'bottom-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                });
+            }
+        } catch (error) {
+            console.error('Error saving task details:', error);
+            Swal.fire('Error', 'Network error while saving task details.', 'error');
+        }
+    }, []);
+
+
+    // ✅ Add new task
     const handleAddTask = async (e) => {
         const newTaskName = e.target.value.trim();
         if (e.key !== 'Enter' || !newTaskName || !selectedProject) return;
@@ -56,7 +143,6 @@ function KanbanBoard({ selectedProject }) {
             }
 
             const newTask = await response.json();
-
             setColumns((prevColumns) => ({
                 ...prevColumns,
                 'todo': {
@@ -71,6 +157,67 @@ function KanbanBoard({ selectedProject }) {
         }
     };
 
+    // ✅ Delete Task Function
+    const handleDeleteTask = async (taskId) => {
+        const confirm = await Swal.fire({
+            title: 'Are you sure?',
+            text: 'This task will be permanently deleted.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, delete it!',
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const serverUrl = import.meta.env.VITE_SERVER_URL;
+            const token = getToken();
+
+            // Backend delete request
+            const response = await fetch(`${serverUrl}/api/tasks/${taskId}`, {
+                method: 'DELETE',
+                headers: {
+                    'x-auth-token': token,
+                },
+            });
+
+            if (!response.ok) {
+                Swal.fire('Error', 'Failed to delete task.', 'error');
+                return;
+            }
+
+            // ✅ Update frontend state
+            setColumns((prevColumns) => {
+                const newColumns = { ...prevColumns };
+
+                for (const colKey in newColumns) {
+                    newColumns[colKey].tasks = newColumns[colKey].tasks.filter(
+                        (task) => task._id !== taskId
+                    );
+                }
+
+                return newColumns;
+            });
+
+            Swal.fire({
+                title: 'Deleted!',
+                text: 'Task has been deleted successfully.',
+                icon: 'success',
+                toast: true,
+                position: 'bottom-end',
+                showConfirmButton: false,
+                timer: 3000,
+            });
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            Swal.fire('Error', 'Network error while deleting task.', 'error');
+        }
+    };
+
+
+    // ✅ Fetch all tasks
     const fetchTasks = async (projectId) => {
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
@@ -91,6 +238,7 @@ function KanbanBoard({ selectedProject }) {
         }
     };
 
+    // ✅ Update task status when dragged
     const handleTaskStatusUpdate = async (taskId, newStatus) => {
         const serverUrl = import.meta.env.VITE_SERVER_URL;
         const token = getToken();
@@ -103,11 +251,10 @@ function KanbanBoard({ selectedProject }) {
             body: JSON.stringify({ newStatus }),
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to update task status on server.');
-        }
+        if (!response.ok) throw new Error('Failed to update task status on server.');
     };
 
+    // ✅ Drag and Drop
     const onDragEnd = async (result) => {
         const { source, destination, draggableId } = result;
         if (!destination) return;
@@ -143,14 +290,12 @@ function KanbanBoard({ selectedProject }) {
             try {
                 await handleTaskStatusUpdate(draggableId, destination.droppableId);
             } catch (error) {
-                console.error('Failed to update task status on server:', error);
+                console.error('Failed to update task status:', error);
                 Swal.fire('Error', 'Failed to save task status. Reverting change.', 'error');
                 if (selectedProject) fetchTasks(selectedProject._id);
             }
         }
     };
-
-    const handleDeleteTask = async (taskId) => {};
 
     useEffect(() => {
         if (selectedProject) {
@@ -168,64 +313,68 @@ function KanbanBoard({ selectedProject }) {
         <>
             {selectedProject ? (
                 <div className="text-dark">
-                    <div className="p-0">
-                        <div className="kanban-board-container kanban-height">
-                            <DragDropContext onDragEnd={onDragEnd}>
-                                {/* Change d-flex to d-md-flex and add custom mobile class (kanban-columns-mobile) */}
-                                <div className="kanban-columns d-md-flex flex-nowrap overflow-auto gap-3 pb-3 text-start kanban-columns-mobile">
-                                    {Object.entries(columns).map(([columnId, column]) => {
-                                        const styles = columnStyles[columnId] || {};
-                                        return (
-                                            <div
-                                                key={columnId}
-                                                className="kanban-column flex-shrink-0 p-3 rounded-3 border border-2 shadow-sm"
-                                                style={{
-                                                    backgroundColor: styles.backgroundColor,
-                                                    borderColor: styles.borderColor,
-                                                    minWidth: '300px',
-                                                    minHeight: '75vh',
-                                                    overflowY: 'auto',
-                                                }}
+                    <div className="kanban-board-container kanban-height">
+                        <DragDropContext onDragEnd={onDragEnd}>
+                            <div className="kanban-columns d-md-flex flex-nowrap overflow-auto gap-3 pb-3 text-start kanban-columns-mobile">
+                                {Object.entries(columns).map(([columnId, column]) => {
+                                    const styles = columnStyles[columnId] || {};
+                                    return (
+                                        <div
+                                            key={columnId}
+                                            className="kanban-column flex-shrink-0 p-3 rounded-3 border border-2 shadow-sm"
+                                            style={{
+                                                backgroundColor: styles.backgroundColor,
+                                                borderColor: styles.borderColor,
+                                                minWidth: '300px',
+                                                minHeight: '75vh',
+                                                overflowY: 'auto',
+                                            }}
+                                        >
+                                            <h5
+                                                className="fw-bold border-bottom pb-2 mb-3 text-capitalize"
+                                                style={{ color: styles.titleColor }}
                                             >
-                                                <h5
-                                                    className="fw-bold border-bottom pb-2 mb-3 text-capitalize"
-                                                    style={{ color: styles.titleColor }}
-                                                >
-                                                    {column.title} <span className="text-muted">({column.tasks.length})</span>
-                                                </h5>
+                                                {column.title}{' '}
+                                                <span className="text-muted">({column.tasks.length})</span>
+                                            </h5>
 
-                                                <Droppable droppableId={columnId}>
-                                                    {(provided, snapshot) => (
-                                                        <div
-                                                            ref={provided.innerRef}
-                                                            {...provided.droppableProps}
-                                                            className={`task-list ${snapshot.isDraggingOver ? 'bg-light border rounded-2 p-2' : ''}`}
-                                                            style={{ minHeight: '60px', transition: 'background-color 0.2s' }}
-                                                        >
-                                                            {column.tasks.map((task, index) => (
-                                                                <TaskCard key={task._id} task={task} index={index} onDelete={handleDeleteTask} />
-                                                            ))}
-                                                            {provided.placeholder}
+                                            <Droppable droppableId={columnId}>
+                                                {(provided, snapshot) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.droppableProps}
+                                                        className={`task-list ${snapshot.isDraggingOver ? 'bg-light border rounded-2 p-2' : ''}`}
+                                                        style={{ minHeight: '60px', transition: 'background-color 0.2s' }}
+                                                    >
+                                                        {column.tasks.map((task, index) => (
+                                                            <TaskCard
+                                                                key={task._id}
+                                                                task={task}
+                                                                index={index}
+                                                                onClick={() => handleViewTaskDetails(task)}
+                                                                onDelete={handleDeleteTask} // ✅ opens drawer
+                                                            />
+                                                        ))}
+                                                        {provided.placeholder}
 
-                                                            {columnId === 'todo' && (
-                                                                <div className="mt-3">
-                                                                    <input
-                                                                        type="text"
-                                                                        placeholder="Add a new task..."
-                                                                        className="form-control form-control-sm border-primary"
-                                                                        onKeyDown={handleAddTask}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </Droppable>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </DragDropContext>
-                        </div>
+                                                        {columnId === 'todo' && (
+                                                            <div className="mt-3">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Add a new task..."
+                                                                    className="form-control form-control-sm border-primary"
+                                                                    onKeyDown={handleAddTask}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </Droppable>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </DragDropContext>
                     </div>
                 </div>
             ) : (
@@ -236,6 +385,14 @@ function KanbanBoard({ selectedProject }) {
                     </div>
                 </div>
             )}
+
+            {/* ✅ Task Detail Drawer */}
+            <TaskDetailDrawer
+                task={currentDetailedTask}
+                isOpen={isDetailDrawerOpen}
+                onClose={handleCloseDetailDrawer}
+                onSaveTask={handleSaveTaskDetails}
+            />
         </>
     );
 }
