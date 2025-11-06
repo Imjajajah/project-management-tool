@@ -86,7 +86,8 @@ const TaskItem = ({
         >
             
             {/* FIXED LAYOUT: Use Flexbox to ensure consistent horizontal alignment */}
-            <div className="d-flex align-items-center text-start w-100" style={{ minHeight: '32px' }}>
+            <div className="d-flex align-items-center text-start w-100 task-item-card flex-wrap" style={{ minHeight: '40px' }}>
+
                 
                 {/* 1. Task Name + Checkbox (Grow to fill remaining space) */}
                 <div className="d-flex align-items-center me-3 min-w-0 flex-grow-1">
@@ -115,8 +116,7 @@ const TaskItem = ({
                 </div>
                 
                 {/* CONTROL GROUP (pushed to the right using ms-auto) */}
-                <div className="d-flex align-items-center flex-shrink-0 ms-auto">
-                    
+                <div className="d-flex align-items-center flex-shrink-0 ms-auto task-controls flex-wrap">
                     {/* 2. Due Date (Now using the reusable DueDateBadge component) */}
                     {/* Width is set here to maintain layout consistency with the original design */}
                     <div className="text-muted d-none d-sm-flex align-items-center justify-content-end me-3 text-nowrap" style={{ width: '75px', fontSize: '0.7rem' }}>

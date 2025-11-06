@@ -279,8 +279,11 @@ function ProjectList({ selectedProject, onProjectSelect, isCollapsed, onToggleCo
                                     className={`btn ${sortBy === 'date' ? 'btn-secondary' : 'btn-outline-secondary'} text-truncate`} 
                                     title="Sort by Date Created"
                                 >
-                                    <i className={`bi bi-sort-down${sortDirection === 'desc' ? '-alt' : ''} me-1 d-none d-sm-inline`}></i>
+                                    <i
+                                    className={`bi ${sortDirection === 'asc' ? 'bi-sort-up' : 'bi-sort-down'} me-1 d-none d-sm-inline`}
+                                    ></i>
                                     Date
+
                                 </button>   
                             </div>
                         </div>

@@ -6,48 +6,94 @@ import TaskDetailDrawer from './TaskDetailDrawer';
 
 // --- CUSTOM STYLES FIX ---
 const customTasklistStyles = `
-    .task-input-group {
-        display: flex; 
-        gap: 0.5rem; 
-        align-items: center; 
-    }
-    .task-input-group .form-control {
-        flex-grow: 1; 
-    }
-    .task-input-group .input-date {
-        max-width: 150px; 
-        flex-shrink: 0;
-    }
-    .task-input-group .btn {
-        min-width: 45px; 
-        flex-shrink: 0;
-        padding-left: 0.75rem; 
-        padding-right: 0.75rem;
-    }
+  .task-input-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+  }
+  .task-input-group .form-control {
+      flex-grow: 1;
+  }
+  .task-input-group .input-date {
+      max-width: 150px;
+      flex-shrink: 0;
+  }
+  .task-input-group .btn {
+      min-width: 45px;
+      flex-shrink: 0;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+  }
 
-    /* NEW: Hover shadow for TaskItem */
-    .hover-shadow-lg:hover {
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175) !important;
-    }
+  .hover-shadow-lg:hover {
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175) !important;
+  }
 
-    @media (max-width: 575.98px) {
-        .task-input-group {
-            flex-direction: column;
-            gap: 0.5rem; 
-        }
-        .task-input-group .form-control,
-        .task-input-group .input-date,
-        .task-input-group .btn {
-            width: 100% !important; 
-            margin: 0 !important; 
-            max-width: 100%;
-        }
-        .task-input-group .btn {
-             padding-left: 0.75rem; 
-             padding-right: 0.75rem;
-        }
-    }
+  /* TASK ITEM MOBILE STYLING */
+  @media (max-width: 767.98px) {
+      .task-input-group {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.5rem;
+      }
+      .task-input-group .form-control,
+      .task-input-group .input-date,
+      .task-input-group .btn {
+          width: 100% !important;
+          max-width: 100%;
+      }
+
+      /* Card adjustments */
+      .task-item-card {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 0.4rem;
+          padding: 0.75rem !important;
+      }
+
+      .task-item-card .task-controls {
+          width: 100%;
+          justify-content: space-between;
+      }
+
+      .task-item-card .task-controls select {
+          width: 100%;
+          font-size: 0.85rem;
+      }
+
+      .task-item-card .task-controls button {
+          width: 36px;
+          height: 36px;
+      }
+
+      /* Task list scroll fix for small screens */
+      .task-list-scroll {
+          max-height: calc(100vh - 350px) !important;
+      }
+
+      /* Make header text and buttons more compact */
+      .card-header h3 {
+          font-size: 1rem !important;
+      }
+      .btn-sm {
+          font-size: 0.85rem !important;
+          padding: 0.4rem 0.6rem !important;
+      }
+  }
+
+  @media (max-width: 575.98px) {
+      .task-item-card {
+          font-size: 0.9rem;
+      }
+      .task-input-group .btn span {
+          display: none;
+      }
+      .task-input-group .btn i {
+          margin: 0;
+      }
+  }
 `;
+
 
 
 function TaskList({ selectedProject }) {
