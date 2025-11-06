@@ -17,34 +17,25 @@ router.get('/google/callback',
     passport.authenticate('google', { failureRedirect: '/login' }),
     async (req, res) => {
         try {
-            // Google profile object
-            const googleEmail = req.user.emails?.[0]?.value;
-            const googleName = req.user.displayName;
-            const googleId = req.user.id;
+            // Find existing user by email
+            let user = await User.findOne({ email: req.user.email });
 
-            if (!googleEmail) {
-                console.error('Google profile missing email:', req.user);
-                return res.redirect('/login');
-            }
-
-            // Check if user already exists
-            let user = await User.findOne({ email: googleEmail });
-
-            if (!user) {
+            if (user) {
+                // If user exists but doesn't have googleId, update it
+                if (!user.googleId) {
+                    user.googleId = req.user.id;
+                    await user.save();
+                }
+            } else {
                 // Create new user
-                user = new User({
-                    username: googleName,
-                    email: googleEmail,
-                    googleId: googleId
+                user = await User.create({
+                    username: req.user.displayName,
+                    email: req.user.email,
+                    googleId: req.user.id
                 });
-                await user.save();
-            } else if (!user.googleId) {
-                // Attach googleId to existing user
-                user.googleId = googleId;
-                await user.save();
             }
 
-            // Generate JWT
+            // Generate JWT token
             const token = jwt.sign(
                 { id: user._id, username: user.username },
                 process.env.JWT_SECRET,
