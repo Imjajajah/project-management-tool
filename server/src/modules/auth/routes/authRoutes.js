@@ -17,20 +17,34 @@ router.get('/google/callback',
     passport.authenticate('google', { failureRedirect: '/login' }),
     async (req, res) => {
         try {
-            let user = await User.findOne({ email: req.user.email });
+            // Google profile object
+            const googleEmail = req.user.emails?.[0]?.value;
+            const googleName = req.user.displayName;
+            const googleId = req.user.id;
+
+            if (!googleEmail) {
+                console.error('Google profile missing email:', req.user);
+                return res.redirect('/login');
+            }
+
+            // Check if user already exists
+            let user = await User.findOne({ email: googleEmail });
 
             if (!user) {
+                // Create new user
                 user = new User({
-                    username: req.user.displayName,
-                    email: req.user.email,
-                    googleId: req.user.id
+                    username: googleName,
+                    email: googleEmail,
+                    googleId: googleId
                 });
                 await user.save();
-            } else if (!user.googleId){
-                user.googleId = req.user.id;
+            } else if (!user.googleId) {
+                // Attach googleId to existing user
+                user.googleId = googleId;
                 await user.save();
             }
 
+            // Generate JWT
             const token = jwt.sign(
                 { id: user._id, username: user.username },
                 process.env.JWT_SECRET,
@@ -44,7 +58,7 @@ router.get('/google/callback',
             res.redirect('/login');
         }
     }
-)
+);
 
 // Protected route to get user profile
 router.get('/profile', auth, getProfile);
