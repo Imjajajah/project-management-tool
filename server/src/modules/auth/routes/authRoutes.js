@@ -13,18 +13,38 @@ router.post('/refresh-token', refreshToken);
 
 // Google OAuth routes
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-router.get('/google/callback',
+router.get('/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login' }),
-    (req, res) => {
-        const token = jwt.sign(
-            { id: req.user._id, username: req.user.username },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
-        const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
-        res.redirect(`${clientUrl}/auth/callback?token=${token}`);
+    async (req, res) => {
+        try {
+            let user = await User.findOne({ email: req.user.email });
+
+            if (!user) {
+                user = new User({
+                    username: req.user.displayName,
+                    email: req.user.email,
+                    googleId: req.user.id
+                });
+                await user.save();
+            } else if (!user.googleId){
+                user.googleId = req.user.id;
+                await user.save();
+            }
+
+            const token = jwt.sign(
+                { id: user._id, username: user.username },
+                process.env.JWT_SECRET,
+                { expiresIn: '1h' }
+            );
+
+            const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+            res.redirect(`${clientUrl}/auth/callback?token=${token}`);
+        } catch (err) {
+            console.error('Google OAuth error:', err);
+            res.redirect('/login');
+        }
     }
-);
+)
 
 // Protected route to get user profile
 router.get('/profile', auth, getProfile);
