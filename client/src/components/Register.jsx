@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Swal from 'sweetalert2';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Register = () => {
     const [username, setUsername] = useState('');
@@ -8,6 +8,7 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const serverUrl = import.meta.env.VITE_SERVER_URL;
+    const navigate = useNavigate(); 
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -30,6 +31,8 @@ const Register = () => {
                     'Registration successful. You can now log in.',
                     'success'
                 );
+
+                navigate('/login');
             } else {
                 const errorData = await response.json();
                 Swal.fire(

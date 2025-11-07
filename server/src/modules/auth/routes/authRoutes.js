@@ -3,7 +3,14 @@ import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import User from '../models/UserModel.js';
 
+import { registerUser, loginUser, getProfile } from '../controllers/authController.js';
+import auth from '../middleware/auth.js';
+
 const router = express.Router();
+
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.get('/profile', auth, getProfile);
 
 // Google OAuth route
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
