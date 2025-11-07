@@ -361,7 +361,7 @@ function KanbanBoard({ selectedProject }) {
                                                             <div className="mt-3">
                                                                 <input
                                                                     type="text"
-                                                                    placeholder="Add a new task..."
+                                                                    placeholder="Add a new task... (Press Enter)"
                                                                     className="form-control form-control-sm border-primary"
                                                                     onKeyDown={handleAddTask}
                                                                 />

@@ -2,6 +2,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/UserModel.js';
 
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$/;
+
 export const getProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user._id).select('-password');
@@ -18,6 +20,14 @@ export const getProfile = async (req, res) => {
 export const registerUser = async (req, res) => {
     try {
         const { username, email, password } = req.body;
+
+        // --- NEW: Server-Side Password Validation ---
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({ 
+                message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.' 
+            });
+        }
+        // --- END NEW VALIDATION ---
 
         // Check if email or username already exists
         const existingUser = await User.findOne({ 

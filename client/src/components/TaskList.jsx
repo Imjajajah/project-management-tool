@@ -104,9 +104,11 @@ function TaskList({ selectedProject }) {
     const [selectedTasks, setSelectedTasks] = useState([]);
     const [showTip, setShowTip] = useState(false);
     
-    // NEW STATE: For Task Detail Drawer
     const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
     const [currentDetailedTask, setCurrentDetailedTask] = useState(null);
+    
+    // NEW STATE: Track if a task is currently being added
+    const [isAddingTask, setIsAddingTask] = useState(false); 
 
 
     const fetchTasks = async (projectId) => {
@@ -147,6 +149,9 @@ function TaskList({ selectedProject }) {
             }
         }
 
+        // 1. Set loading state to true
+        setIsAddingTask(true); 
+
         try {
             const serverUrl = import.meta.env.VITE_SERVER_URL;
             const token = getToken();
@@ -176,6 +181,9 @@ function TaskList({ selectedProject }) {
         } catch (error) {
             console.error("Error adding task:", error);
             Swal.fire('Error!', 'An unexpected error occurred. Please try again.', 'error');
+        } finally {
+            // 2. Set loading state back to false
+            setIsAddingTask(false); 
         }
     };
     
@@ -484,24 +492,42 @@ function TaskList({ selectedProject }) {
                                 value={newTaskName}
                                 onChange={(e) => setNewTaskName(e.target.value)}
                                 onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
+                                    if (e.key === 'Enter' && !isAddingTask) {
                                         handleAddTask();
                                     }
                                 }}
+                                // Disable input while adding
+                                disabled={isAddingTask} 
                             />
                             <input
                                 type="date"
                                 className="form-control bg-white text-dark border-secondary input-date"
                                 value={newTaskDueDate}
                                 onChange={(e) => setNewTaskDueDate(e.target.value)}
+                                // Disable input while adding
+                                disabled={isAddingTask} 
                             />
                             <button 
                                 onClick={handleAddTask} 
                                 className="btn btn-success flex-shrink-0"
+                                // Disable button while adding
+                                disabled={isAddingTask}
                             >
-                                <i className="bi bi-plus-circle"></i>
-                                <span className="d-none d-sm-inline ms-1">Add Task</span>
-                                <span className="d-inline d-sm-none ms-1">Add</span>
+                                {isAddingTask ? (
+                                    // Show loading spinner and text
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                        <span className="d-none d-sm-inline ms-1">Adding Task...</span>
+                                        <span className="d-inline d-sm-none ms-1">Adding</span>
+                                    </>
+                                ) : (
+                                    // Show default icon and text
+                                    <>
+                                        <i className="bi bi-plus-circle"></i>
+                                        <span className="d-none d-sm-inline ms-1">Add Task</span>
+                                        <span className="d-inline d-sm-none ms-1">Add</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                         
@@ -516,7 +542,6 @@ function TaskList({ selectedProject }) {
                                         onToggleSelect={handleToggleSelect}
                                         onDelete={handleDeleteTask}
                                         onUpdateStatus={handleUpdateStatus}
-                                        // NEW PROP: Pass the detail view handler
                                         onViewTaskDetails={handleViewTaskDetails}
                                     />
                                 ))
@@ -543,12 +568,11 @@ function TaskList({ selectedProject }) {
                 </div>
             )}
 
-            {/* NEW: Render the Task Detail Drawer, floating above all other content */}
+            {/* Task Detail Drawer */}
             <TaskDetailDrawer
                 task={currentDetailedTask}
                 isOpen={isDetailDrawerOpen}
                 onClose={handleCloseDetailDrawer}
-                // FIXED: Pass the correct, unified save handler
                 onSaveTask={handleSaveTaskDetails}
             />
         </>

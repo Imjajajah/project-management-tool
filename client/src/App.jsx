@@ -39,6 +39,10 @@ function App() {
                     />
                     {/* The kanban route now accepts a project ID */}
                     <Route path="/kanban/:projectId" element={<ProtectedRoute component={KanbanPage} />} />
+                    <Route 
+                        path="/kanban" 
+                        element={<ProtectedRoute component={KanbanPage} />} 
+                    />
                     
                     {/* Public routes */}
                     <Route path="/login" element={<Login/>} />
